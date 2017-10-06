@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"io"
 	"log"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"os"
+	_ "github.com/mattn/go-sqlite3"
+	"database/sql"
+	"github.com/thomaspaulin/snc-server/snc/database"
 )
 
 func index(w http.ResponseWriter, req *http.Request) {
@@ -32,15 +33,9 @@ func port() string {
 }
 
 func main() {
-	db, err := gorm.Open("sqlite3", "snc.db")
-	if err != nil {
-		panic("failed to connect database")
-	}
-	defer db.Close()
-
-	// Migrate schema
-	// Start with match and Team only
-	db.AutoMigrate(&snc.Match{}, &snc.Team{})
+	var err error
+	database.DB, err = sql.Open("sqlite3", "./snc.db")
+	handle(err)
 
 	http.HandleFunc("/", index)
 	http.HandleFunc("/hello", hello)
@@ -48,4 +43,10 @@ func main() {
 
 	log.Print("Starting up server on port " + port())
 	log.Fatal(http.ListenAndServe(port(), nil))
+}
+
+func handle(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
