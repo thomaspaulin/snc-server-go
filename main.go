@@ -7,7 +7,7 @@ import (
 	"os"
 	_ "github.com/mattn/go-sqlite3"
 	"database/sql"
-	"github.com/thomaspaulin/snc-server/snc/database"
+	"github.com/thomaspaulin/snc-server/database"
 )
 
 func index(w http.ResponseWriter, req *http.Request) {
