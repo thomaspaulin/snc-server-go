@@ -8,13 +8,13 @@ import (
 
 // todo handle the errors properly
 const (
-	PracticeGame = "PR"
-	RegularGame = "RS"
-	PlayoffGame = "PO"
+	PracticeGame = 		"PR"
+	RegularGame = 		"RS"
+	PlayoffGame = 		"PO"
 
-	RegularGoal = "RG"
-	PowerPlayGoal = "PP"
-	ShortHandedGoal = "SH"
+	RegularGoal = 		"RG"
+	PowerPlayGoal = 	"PP"
+	ShortHandedGoal = 	"SH"
 )
 
 // Models
@@ -120,6 +120,34 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 		return nil, err
 	}
 	return matches, nil
+}
+
+func FetchMatch(id string, db *sql.DB) (*Match, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	var match *Match
+	err = tx.QueryRow("SELECT * WHERE id = ?", id).Scan(&match)
+	switch {
+	case err == sql.ErrNoRows:
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		} else {
+			return nil, nil
+		}
+	case err != nil:
+		return nil, err
+	default:
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		} else {
+			return match, nil
+		}
+	}
 }
 
 func (m *Match) create(db *sql.DB) error {
