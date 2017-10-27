@@ -34,6 +34,7 @@ type Match struct {
 }
 
 type MatchSummary struct {
+	matchId		uint32
 	// Datetime of the match start in UTC
 	start		time.Time
 	// ID of the away team
@@ -52,6 +53,7 @@ type MatchSummary struct {
 }
 
 type Goal struct {
+	id			uint32
 	goalType	string
 	// ID of the team that scored
 	team		string
@@ -65,7 +67,7 @@ type Goal struct {
 }
 
 type Penalty struct {
-	// ID of the team that was penalised
+	id			uint32
 	team		string
 	period		uint
 	// Seconds left in the period when the penalty was incurred
