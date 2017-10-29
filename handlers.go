@@ -3,8 +3,7 @@ package main
 import (
 	"net/http"
 	"io"
-	"github.com/thomaspaulin/snc-server/models"
-	"github.com/thomaspaulin/snc-server/database"
+	"github.com/thomaspaulin/snc-server-go/database"
 	"encoding/json"
 	"github.com/gorilla/mux"
 )
@@ -20,7 +19,7 @@ func Hello(w http.ResponseWriter, req *http.Request) {
 func MatchesHandler(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
-		matches, err := models.FetchMatches(database.DB)
+		matches, err := FetchMatches(database.DB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -33,7 +32,7 @@ func MatchesHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	case "POST":
 		decoder := json.NewDecoder(req.Body)
-		matches := make([]*models.Match, 0)
+		matches := make([]*Match, 0)
 		err := decoder.Decode(matches)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -59,7 +58,7 @@ func SpecificMatchHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	switch req.Method {
 	case "GET":
-		match, err := models.FetchMatch(matchID, database.DB)
+		match, err := FetchMatch(matchID, database.DB)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
