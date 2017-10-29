@@ -2,6 +2,9 @@ package main
 
 import (
 	"github.com/thomaspaulin/snc-server-go/database"
+	"database/sql"
+	"fmt"
+	"log"
 )
 
 //-----------------------------------------------//
@@ -14,39 +17,38 @@ type Team struct {
 	logoURL		string	`json:"logoURL"`
 }
 
+func (t *Team) Create() (id uint32, err error) {
+	d := Division{name: t.division}
+	divID := d.Save()
+	id = -1
+	err = database.DB.QueryRow("INSERT INTO teams " +
+									"(name, division_id, logo_url) " +
+								"VALUES " +
+									"(?, ?, ?) " +
+								"RETURNING team_id", t.name, divID, t.logoURL).Scan(&id)
+	log.Println(err.Error())
+	return id, nil
+}
+
 func FetchTeamByID(id uint32) (*Team, error) {
-	tx, err := database.DB.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
 	t := &Team{id: id}
-	err = tx.QueryRow("SELECT teams.name AS team_name, " +
+	err := database.DB.QueryRow("SELECT teams.name AS team_name, " +
 								"divisions.name AS div_name, " +
 								"teams.logo_url " +
 							"FROM teams " +
 							"JOIN divisions " +
 								"ON teams.division_id = divisions.division_id " +
 							"WHERE team_id = ?", id).Scan(&t.id, &t.division, &t.logoURL)
-	if err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return &Team{}, nil
+	} else if err != nil {
 		return nil, err
 	}
 	return t, nil
 }
 
 func FetchTeam(teamName string, divName string) (*Team, error) {
-	tx, err := database.DB.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	t := &Team{name: teamName, division: divName}
-
-	rows, err := tx.Query("SELECT teams.team_id AS team_id, " +
+	rows, err := database.DB.Query("SELECT teams.team_id AS team_id, " +
 									"teams.name AS team_name, " +
 									"divisions.name AS div_name, " +
 									"teams.logo_url " +
@@ -56,25 +58,31 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 								"WHERE teams.name = ? " +
 									"AND divisions.name = ?", teamName, divName)
 	if err != nil {
+		// Connection or statement error
 		return nil, err
 	}
 	defer rows.Close()
 
+	teams := []Team{}
 	for rows.Next() {
+		t := Team{}
 		err := rows.Scan(&t.id, &t.name, &t.division, &t.logoURL)
 		if err != nil {
+			// Row parsing error
 			return nil, err
 		}
+		teams = append(teams, t)
+		if len(teams) > 1 {
+			return &teams[0], fmt.Errorf("expected only one team to match the criteria but found %d.", len(teams))
+		}
 	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
+	err = rows.Err()
 	if err != nil {
+		// Errors within rows
 		return nil, err
 	}
-	return t, nil
+	rows.Close()
+	return &teams[0], nil
 }
 
 //-----------------------------------------------//
@@ -83,6 +91,31 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 type Division struct {
 	id			uint32
 	name		string
+}
+
+func (d *Division) Save() (id uint32) {
+	if d.id > 0 {
+		return d.Update()
+	} else {
+		return d.Create()
+	}
+}
+
+func (d *Division) Create() (id uint32) {
+	id = -1
+	database.DB.QueryRow("INSERT INTO divisions (name) VALUES (?) RETURNING division_id", d.name).Scan(&id)
+	return id
+}
+
+func (d *Division) Update() (id uint32) {
+	if d.id > 0 {
+		// try updating using the ID
+		database.DB.QueryRow("UPDATE divisions SET name = ? WHERE division_id = ? RETURNING division_id", d.name, d.id).Scan(&id)
+	} else {
+		// try updating using the name
+		// this is obsolete while it's only name and ID
+	}
+	return id
 }
 
 //-----------------------------------------------//
