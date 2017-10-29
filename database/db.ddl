@@ -19,26 +19,26 @@ create unique index teams_name_uindex
   on teams (name)
 ;
 
-create table divisons
+create table divisions
 (
   division_id serial not null
-    constraint divisons_pkey
+    constraint divisions_pkey
     primary key,
   name varchar(20) not null
 )
 ;
 
-create unique index divisons_division_id_uindex
-  on divisons (division_id)
+create unique index divisions_division_id_uindex
+  on divisions (division_id)
 ;
 
-create unique index divisons_name_uindex
-  on divisons (name)
+create unique index divisions_name_uindex
+  on divisions (name)
 ;
 
 alter table teams
-  add constraint teams_divisons_division_id_fk
-foreign key (division_id) references divisons
+  add constraint teams_divisions_division_id_fk
+foreign key (division_id) references divisions
 ;
 
 create table players
