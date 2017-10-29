@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"log"
 	"os"
-	_ "github.com/mattn/go-sqlite3"
 	"database/sql"
-	"github.com/thomaspaulin/snc-server/database"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/thomaspaulin/snc-server-go/database"
 )
 
 func port() string {
