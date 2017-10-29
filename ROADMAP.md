@@ -36,3 +36,5 @@
 .
 
 ???. Create columns/tables to log creation and modified, and add a deletion flag
+
+???+1. Transactions for the database
