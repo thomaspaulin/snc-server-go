@@ -1,4 +1,4 @@
-package models
+package main
 
 import (
 	"time"
@@ -24,22 +24,19 @@ type Match struct {
 	// Datetime of the match start in UTC
 	start 		time.Time
 	season		int
-	// ID of the away team
 	away 		string
-	// ID of the home team
 	home 		string
 	awayScore	int
 	homeScore	int
 	rink		string
 }
 
+// TODO: unify the match and match summary classes? In a way they are the same thing
 type MatchSummary struct {
 	matchId		uint32
 	// Datetime of the match start in UTC
 	start		time.Time
-	// ID of the away team
 	away		string
-	// ID of the home team
 	home		string
 	awayScore	int
 	homeScore	int
@@ -62,7 +59,6 @@ type Goal struct {
 	time		uint
 	// ID of the scoring player
 	scorer		string
-	// IDs of the players that assisted
 	assists		[]string
 }
 
