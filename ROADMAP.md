@@ -1,4 +1,5 @@
 # Road Map
+0. Create materialised views in the database of the joins to avoid having to do them
 1. Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
     1. Teams
         1. Read
@@ -13,7 +14,6 @@
     4. Rinks
         1. Read
         2. Create
-    
 2. Export members of the model structs instead of keeping them all private
 3. Create DB queries for players
 4. Create players endpoint
