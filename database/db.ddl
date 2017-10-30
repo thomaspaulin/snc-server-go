@@ -61,7 +61,7 @@ create table matches
   match_id serial not null
     constraint matches_pkey
     primary key,
-  start time not null,
+  start timestamp not null,
   season integer default 2017,
   away_id integer not null
     constraint away_team_id_fk
