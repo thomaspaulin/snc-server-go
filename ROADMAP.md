@@ -1,5 +1,5 @@
 # Road Map
-0. Create materialised views in the database of the joins to avoid having to do them
+0. Create views in the database of the joins to avoid having to do them
 1. Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
     1. Teams
         1. Read
@@ -30,11 +30,11 @@
     b. Update queries
 8. Add player match stats endpoint
 9. Add goalie match stats endpoint
+10. Create columns/tables to log creation and modified, and add a deletion flag
 
 .
 .
 .
 
-???. Create columns/tables to log creation and modified, and add a deletion flag
-
+???. Create materialised views
 ???+1. Transactions for the database
