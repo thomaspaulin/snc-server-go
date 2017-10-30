@@ -4,6 +4,8 @@ import (
 	"time"
 	"database/sql"
 	"errors"
+	"github.com/thomaspaulin/snc-server-go/database"
+	"log"
 )
 
 // todo handle the errors properly
@@ -77,22 +79,32 @@ type Penalty struct {
 }
 
 // Database logic
-func (m *Match) Save(db *sql.DB) error {
-	err := m.create(db)
-	if err != nil {
-		return m.update(db)
+func (m *Match) Save() (id uint32, err error) {
+	id = -1
+	if m.id > 0 {
+		id, err = m.Create()
 	} else {
-		return nil
+		id, err = m.Update()
 	}
+	return id, err
 }
 
-func FetchMatches(db *sql.DB) ([]*Match, error) {
-	tx, err := db.Begin()
+func (m *Match) Create() (id uint32, err error) {
+	database.DB.QueryRow("INSERT INTO matches " +
+		"(start, season, away, home, awayScore, homeScore, rink) " +
+		"VALUES " +
+		"(?, ?, ?, ?, -1, -1, ?)" +
+		"RETURNING match_id", m.start, m.season, m.away, m.home, m.awayScore, m.homeScore, m.rink).
+		Scan(&id)
 	if err != nil {
-		return nil, err
+		log.Println(err.Error())
 	}
-	defer tx.Rollback()
-	rows, err := tx.Query("SELECT * FROM matches")
+	return id, nil
+}
+
+func FetchMatches() ([]*Match, error) {
+	// TODO: Redo this query to do join and get the team names. It will fail as is
+	rows, err := database.DB.Query("SELECT * FROM matches")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +112,7 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 
 	matches := make([]*Match, 0)
 	for rows.Next() {
-		m := new(Match)
+		m := Match{}
 		err := rows.Scan(&m.id, &m.start, &m.season, &m.away, &m.home, &m.awayScore, &m.homeScore, &m.rink)
 		// err here is the row.Scan(...) error. It shadows the err from outside the loop, and does not overwrite
 		if err != nil {
@@ -108,68 +120,26 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 			// later on this might want to be changed to pass through and list the IDs of the bad rows
 			return nil, err
 		}
-		matches = append(matches, m)
+		matches = append(matches, &m)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
 		return nil, err
 	}
 	return matches, nil
 }
 
-func FetchMatch(id string, db *sql.DB) (*Match, error) {
-	tx, err := db.Begin()
-	if err != nil {
+func FetchMatch(id uint32) (*Match, error) {
+	m := Match{id: id}
+	// TODO redo the query to do joins instead of selecting all columns
+	err := database.DB.QueryRow("SELECT * WHERE id = ?", id).Scan(&match)
+	if err == sql.ErrNoRows {
+		return &Match{}, nil
+	} else if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
-	var match *Match
-	err = tx.QueryRow("SELECT * WHERE id = ?", id).Scan(&match)
-	switch {
-	case err == sql.ErrNoRows:
-		err = tx.Commit()
-		if err != nil {
-			return nil, err
-		} else {
-			return nil, nil
-		}
-	case err != nil:
-		return nil, err
-	default:
-		err = tx.Commit()
-		if err != nil {
-			return nil, err
-		} else {
-			return match, nil
-		}
-	}
+	return &m, nil
 }
 
-func (m *Match) create(db *sql.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	stmt, err := tx.Prepare("INSERT INTO matches (start, season, away, home, awayScore, homeScore, rink) VALUES (?, ?, ?, ?, -1, -1, ?)")
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	_, err = stmt.Exec(m.start, m.season, m.awayScore, m.home, m.rink)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *Match) update(db *sql.DB) error {
-	return errors.New("not implemented");
+func (m *Match) Update() (id uint32, err error) {
+	return -1, errors.New("not implemented");
 }
