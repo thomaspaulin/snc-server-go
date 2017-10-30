@@ -26,12 +26,14 @@ func (t *Team) Create() (id uint32, err error) {
 								"VALUES " +
 									"(?, ?, ?) " +
 								"RETURNING team_id", t.name, divID, t.logoURL).Scan(&id)
-	log.Println(err.Error())
+	if err != nil {
+		log.Println(err.Error())
+	}
 	return id, nil
 }
 
 func FetchTeamByID(id uint32) (*Team, error) {
-	t := &Team{id: id}
+	t := Team{id: id}
 	err := database.DB.QueryRow("SELECT teams.name AS team_name, " +
 								"divisions.name AS div_name, " +
 								"teams.logo_url " +
@@ -44,7 +46,7 @@ func FetchTeamByID(id uint32) (*Team, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return t, nil
+	return &t, nil
 }
 
 func FetchTeam(teamName string, divName string) (*Team, error) {
@@ -63,7 +65,7 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 	}
 	defer rows.Close()
 
-	teams := []Team{}
+	teams := []*Team{}
 	for rows.Next() {
 		t := Team{}
 		err := rows.Scan(&t.id, &t.name, &t.division, &t.logoURL)
@@ -71,9 +73,9 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 			// Row parsing error
 			return nil, err
 		}
-		teams = append(teams, t)
+		teams = append(teams, &t)
 		if len(teams) > 1 {
-			return &teams[0], fmt.Errorf("expected only one team to match the criteria but found %d.", len(teams))
+			return teams[0], fmt.Errorf("expected only one team to match the criteria but found %d.", len(teams))
 		}
 	}
 	err = rows.Err()
@@ -82,7 +84,7 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 		return nil, err
 	}
 	rows.Close()
-	return &teams[0], nil
+	return teams[0], nil
 }
 
 //-----------------------------------------------//
@@ -93,7 +95,7 @@ type Division struct {
 	name		string
 }
 
-func (d *Division) Save() (id uint32) {
+func (d *Division) Save() (id uint32, err error) {
 	if d.id > 0 {
 		return d.Update()
 	} else {
@@ -101,21 +103,22 @@ func (d *Division) Save() (id uint32) {
 	}
 }
 
-func (d *Division) Create() (id uint32) {
+func (d *Division) Create() (id uint32, err error) {
 	id = -1
-	database.DB.QueryRow("INSERT INTO divisions (name) VALUES (?) RETURNING division_id", d.name).Scan(&id)
-	return id
+	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES (?) RETURNING division_id", d.name).Scan(&id)
+	return id, err
 }
 
-func (d *Division) Update() (id uint32) {
+func (d *Division) Update() (id uint32, err error) {
+	id = -1
 	if d.id > 0 {
 		// try updating using the ID
-		database.DB.QueryRow("UPDATE divisions SET name = ? WHERE division_id = ? RETURNING division_id", d.name, d.id).Scan(&id)
+		err = database.DB.QueryRow("UPDATE divisions SET name = ? WHERE division_id = ? RETURNING division_id", d.name, d.id).Scan(&id)
 	} else {
 		// try updating using the name
 		// this is obsolete while it's only name and ID
 	}
-	return id
+	return id, err
 }
 
 //-----------------------------------------------//
