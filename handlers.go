@@ -28,7 +28,7 @@ func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
 	if encodeErr != nil {
 		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
+	// The JSON encoder seems to write the OK header so we don't need to do it manually
 }
 
 func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
@@ -45,7 +45,6 @@ func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
@@ -67,7 +66,6 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
@@ -89,5 +87,4 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
