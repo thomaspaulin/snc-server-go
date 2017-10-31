@@ -32,6 +32,7 @@
 8. Add player match stats endpoint
 9. Add goalie match stats endpoint
 10. Create columns/tables to log creation and modified, and add a deletion flag
+11. Consider moving to gin-gonic/gin because it has had commits within the past few months until gocraft/web which last had a commit 2 years ago
 
 .
 .
