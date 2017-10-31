@@ -80,7 +80,7 @@ type Penalty struct {
 
 // Database logic
 func (m *Match) Save() (id uint32, err error) {
-	id = -1
+	id = 0
 	if m.id > 0 {
 		id, err = m.Create()
 	} else {
@@ -131,7 +131,7 @@ func FetchMatches() ([]*Match, error) {
 func FetchMatch(id uint32) (*Match, error) {
 	m := Match{id: id}
 	// TODO redo the query to do joins instead of selecting all columns
-	err := database.DB.QueryRow("SELECT * WHERE id = ?", id).Scan(&match)
+	err := database.DB.QueryRow("SELECT * WHERE id = ?", id).Scan(&m)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
@@ -141,5 +141,5 @@ func FetchMatch(id uint32) (*Match, error) {
 }
 
 func (m *Match) Update() (id uint32, err error) {
-	return -1, errors.New("not implemented");
+	return 0, errors.New("not implemented");
 }

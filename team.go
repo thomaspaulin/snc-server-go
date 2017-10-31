@@ -19,8 +19,8 @@ type Team struct {
 
 func (t *Team) Create() (id uint32, err error) {
 	d := Division{name: t.division}
-	divID := d.Save()
-	id = -1
+	divID, err := d.Save()
+	id = 0
 	err = database.DB.QueryRow("INSERT INTO teams " +
 									"(name, division_id, logo_url) " +
 								"VALUES " +
@@ -104,13 +104,13 @@ func (d *Division) Save() (id uint32, err error) {
 }
 
 func (d *Division) Create() (id uint32, err error) {
-	id = -1
+	id = 0
 	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES (?) RETURNING division_id", d.name).Scan(&id)
 	return id, err
 }
 
 func (d *Division) Update() (id uint32, err error) {
-	id = -1
+	id = 0
 	if d.id > 0 {
 		// try updating using the ID
 		err = database.DB.QueryRow("UPDATE divisions SET name = ? WHERE division_id = ? RETURNING division_id", d.name, d.id).Scan(&id)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"log"
 	"os"
@@ -20,8 +21,16 @@ func port() string {
 
 func main() {
 	var err error
-	database.DB, err = sql.Open("sqlite3", "./snc.db")
-	handle(err)
+	// todo
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", 
+			os.Getenv("SNC_USER"), 
+			os.Getenv("SNC_PW"), 
+			os.Getenv("SNC_HOST"), 
+			os.Getenv("SNC_DB"))
+	database.DB, err = sql.Open("postgres", connStr)
+	if err != nil {
+		panic(err)
+	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", Index)
@@ -31,10 +40,4 @@ func main() {
 
 	log.Print("Starting up server on port " + port())
 	log.Fatal(http.ListenAndServe(port(), nil))
-}
-
-func handle(err error) {
-	if err != nil {
-		panic(err)
-	}
 }

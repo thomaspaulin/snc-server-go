@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 	"io"
-	"github.com/thomaspaulin/snc-server-go/database"
 	"encoding/json"
+	"strconv"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +19,7 @@ func Hello(w http.ResponseWriter, req *http.Request) {
 func MatchesHandler(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
-		matches, err := FetchMatches(database.DB)
+		matches, err := FetchMatches()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -39,7 +39,7 @@ func MatchesHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		defer req.Body.Close()
 		for _, m := range matches {
-			err := m.Save(database.DB)
+			_, err := m.Save()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -58,7 +58,11 @@ func SpecificMatchHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	switch req.Method {
 	case "GET":
-		match, err := FetchMatch(matchID, database.DB)
+		mID, err := strconv.ParseInt(matchID, 10, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		match, err := FetchMatch(uint32(mID))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
