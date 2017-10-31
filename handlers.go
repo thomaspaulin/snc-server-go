@@ -5,109 +5,89 @@ import (
 	"io"
 	"encoding/json"
 	"strconv"
-	"github.com/gorilla/mux"
+	"github.com/gocraft/web"
 )
 
-func Index(w http.ResponseWriter, req *http.Request) {
+func Index(w web.ResponseWriter, req *web.Request) {
 	Hello(w, req)
 }
 
-func Hello(w http.ResponseWriter, req *http.Request) {
+func Hello(w web.ResponseWriter, req *web.Request) {
 	io.WriteString(w, "Hello, world!\n")
 }
 
-func MatchesHandler(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case "GET":
-		matches, err := FetchMatches()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		encoder := json.NewEncoder(w)
-		encodeErr := encoder.Encode(matches)
-		if encodeErr != nil {
-			http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-		}
-		w.WriteHeader(http.StatusOK)
-	case "POST":
-		decoder := json.NewDecoder(req.Body)
-		matches := make([]*Match, 0)
-		err := decoder.Decode(matches)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		defer req.Body.Close()
-		for _, m := range matches {
-			_, err := m.Save()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		}
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// todo figure out a way get context in as well calling methods on the struct
+func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
+	matches, err := FetchMatches(ctx.database)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encodeErr := encoder.Encode(matches)
+	if encodeErr != nil {
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
-func SpecificMatchHandler(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	matchID := vars["matchID"]
-	if len(vars) == 0 || matchID == "" {
+func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
+	decoder := json.NewDecoder(req.Body)
+	matches := make([]*Match, 0)
+	err := decoder.Decode(matches)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	defer req.Body.Close()
+	for _, m := range matches {
+		_, err := m.Save(ctx.database)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
+	matchID := req.PathParams["matchID"]
+	if matchID == "" {
 		http.Error(w, "Missing match ID", http.StatusBadRequest)
 	}
-	switch req.Method {
-	case "GET":
-		mID, err := strconv.ParseInt(matchID, 10, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-		match, err := FetchMatch(uint32(mID))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		encoder := json.NewEncoder(w)
-		err = encoder.Encode(match)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.WriteHeader(http.StatusOK)
-	case "PUT":
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
-		// todo for updating an entire match
-	case "PATCH":
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
-		// todo for updating a particular aspect of a match
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	mID, err := strconv.ParseInt(matchID, 10, 32)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+	match, err := FetchMatch(ctx.database, uint32(mID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(match)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
-func SpecificTeamHandler(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	teamID := vars["teamID"]
-	if len(vars) == 0 || teamID == "" {
+func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
+	teamID := req.PathParams["teamID"]
+	if teamID == "" {
 		http.Error(w, "Missing team ID", http.StatusBadRequest)
 	}
-	switch req.Method {
-	case "GET":
-		tID, err := strconv.ParseInt(teamID, 10, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		team, err := FetchTeamByID(uint32(tID))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		encoder := json.NewEncoder(w)
-		err = encoder.Encode(team)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	tID, err := strconv.ParseInt(teamID, 10, 32)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	team, err := FetchTeamByID(ctx.database, uint32(tID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(team)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
 }

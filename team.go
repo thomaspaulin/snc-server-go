@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/thomaspaulin/snc-server-go/database"
 	"database/sql"
 	"fmt"
 	"log"
@@ -17,11 +16,11 @@ type Team struct {
 	LogoURL		string	`json:"logoURL"`
 }
 
-func (t *Team) Create() (id uint32, err error) {
+func (t *Team) Create(db *sql.DB) (id uint32, err error) {
 	d := Division{Name: t.Division}
-	divID, err := d.Save()
+	divID, err := d.Save(db)
 	id = 0
-	err = database.DB.QueryRow("INSERT INTO teams " +
+	err = db.QueryRow("INSERT INTO teams " +
 									"(name, division_id, logo_url) " +
 								"VALUES " +
 									"($1, $2, $3) " +
@@ -32,9 +31,9 @@ func (t *Team) Create() (id uint32, err error) {
 	return id, nil
 }
 
-func FetchTeamByID(id uint32) (*Team, error) {
+func FetchTeamByID(db *sql.DB, id uint32) (*Team, error) {
 	t := Team{ID: id}
-	err := database.DB.QueryRow("SELECT teams.name AS team_name, " +
+	err := db.QueryRow("SELECT teams.name AS team_name, " +
 								"divisions.name AS div_name, " +
 								"teams.logo_url " +
 							"FROM teams " +
@@ -49,8 +48,8 @@ func FetchTeamByID(id uint32) (*Team, error) {
 	return &t, nil
 }
 
-func FetchTeam(teamName string, divName string) (*Team, error) {
-	rows, err := database.DB.Query("SELECT teams.team_id AS team_id, " +
+func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
+	rows, err := db.Query("SELECT teams.team_id AS team_id, " +
 									"teams.name AS team_name, " +
 									"divisions.name AS div_name, " +
 									"teams.logo_url " +
@@ -95,25 +94,25 @@ type Division struct {
 	Name		string	`json:"name"`
 }
 
-func (d *Division) Save() (id uint32, err error) {
+func (d *Division) Save(db *sql.DB) (id uint32, err error) {
 	if d.ID > 0 {
-		return d.Update()
+		return d.Update(db)
 	} else {
-		return d.Create()
+		return d.Create(db)
 	}
 }
 
-func (d *Division) Create() (id uint32, err error) {
+func (d *Division) Create(db *sql.DB) (id uint32, err error) {
 	id = 0
-	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.Name).Scan(&id)
+	err = db.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.Name).Scan(&id)
 	return id, err
 }
 
-func (d *Division) Update() (id uint32, err error) {
+func (d *Division) Update(db *sql.DB) (id uint32, err error) {
 	id = 0
 	if d.ID > 0 {
 		// try updating using the ID
-		err = database.DB.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.Name, d.ID).Scan(&id)
+		err = db.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.Name, d.ID).Scan(&id)
 	} else {
 		// try updating using the name
 		// this is obsolete while it's only name and ID

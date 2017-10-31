@@ -4,7 +4,6 @@ import (
 	"time"
 	"database/sql"
 	"errors"
-	"github.com/thomaspaulin/snc-server-go/database"
 	"log"
 )
 
@@ -34,18 +33,18 @@ type Match struct {
 	Rink		string		`json:"rink"`
 }
 
-func (m *Match) Save() (id uint32, err error) {
+func (m *Match) Save(db *sql.DB) (id uint32, err error) {
 	id = 0
 	if m.ID > 0 {
-		id, err = m.Create()
+		id, err = m.Create(db)
 	} else {
-		id, err = m.Update()
+		id, err = m.Update(db)
 	}
 	return id, err
 }
 
-func (m *Match) Create() (id uint32, err error) {
-	database.DB.QueryRow("INSERT INTO matches " +
+func (m *Match) Create(db *sql.DB) (id uint32, err error) {
+	db.QueryRow("INSERT INTO matches " +
 		"(start, season, away, home, awayScore, homeScore, rink) " +
 		"VALUES " +
 		"($1, $2, $3, $4, -1, -1, $5)" +
@@ -57,9 +56,9 @@ func (m *Match) Create() (id uint32, err error) {
 	return id, nil
 }
 
-func FetchMatches() ([]*Match, error) {
+func FetchMatches(db *sql.DB) ([]*Match, error) {
 	// TODO: Redo this query to do join and get the team names. It will fail as is
-	rows, err := database.DB.Query("SELECT * FROM matches")
+	rows, err := db.Query("SELECT * FROM matches")
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +82,10 @@ func FetchMatches() ([]*Match, error) {
 	return matches, nil
 }
 
-func FetchMatch(id uint32) (*Match, error) {
+func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
 	m := Match{ID: id}
 	// TODO redo the query to do joins instead of selecting all columns
-	err := database.DB.QueryRow("SELECT * WHERE id = $1", id).Scan(&m)
+	err := db.QueryRow("SELECT * WHERE id = $1", id).Scan(&m)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
@@ -95,7 +94,7 @@ func FetchMatch(id uint32) (*Match, error) {
 	return &m, nil
 }
 
-func (m *Match) Update() (id uint32, err error) {
+func (m *Match) Update(db *sql.DB) (id uint32, err error) {
 	return 0, errors.New("not implemented");
 }
 
