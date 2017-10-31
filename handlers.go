@@ -37,7 +37,7 @@ func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
 func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 	decoder := json.NewDecoder(req.Body)
 	matches := make([]*Match, 0)
-	err := decoder.Decode(matches)
+	err := decoder.Decode(&matches)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,6 +94,45 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(team)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
+	rinks, err := FetchRinks(ctx.database)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encodeErr := encoder.Encode(rinks)
+	if encodeErr != nil {
+		log.Println(err.Error())
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
+	teamID := req.PathParams["rinkID"]
+	if teamID == "" {
+		http.Error(w, "Missing rink ID", http.StatusBadRequest)
+	}
+	rID, err := strconv.ParseInt(teamID, 10, 32)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	rink, err := FetchRinkByID(ctx.database, uint32(rID))
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(rink)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
