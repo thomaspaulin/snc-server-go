@@ -83,3 +83,31 @@ func SpecificMatchHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
+
+func SpecificTeamHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	teamID := vars["teamID"]
+	if len(vars) == 0 || teamID == "" {
+		http.Error(w, "Missing team ID", http.StatusBadRequest)
+	}
+	switch req.Method {
+	case "GET":
+		tID, err := strconv.ParseInt(teamID, 10, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		team, err := FetchTeamByID(uint32(tID))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		encoder := json.NewEncoder(w)
+		err = encoder.Encode(team)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusOK)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}

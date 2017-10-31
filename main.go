@@ -40,6 +40,7 @@ func main() {
 	r.HandleFunc("/hello", Hello)
 	r.HandleFunc("/matches", MatchesHandler)
 	r.HandleFunc("/matches/{matchID}", SpecificMatchHandler)
+	r.HandleFunc("/teams/{teamID}", SpecificTeamHandler)
 
 	log.Print("Starting up server on port " + port())
 	log.Fatal(http.ListenAndServe(port(), r))
