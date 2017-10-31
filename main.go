@@ -42,5 +42,5 @@ func main() {
 	r.HandleFunc("/matches/{matchID}", SpecificMatchHandler)
 
 	log.Print("Starting up server on port " + port())
-	log.Fatal(http.ListenAndServe(port(), nil))
+	log.Fatal(http.ListenAndServe(port(), r))
 }
