@@ -39,6 +39,7 @@ func (ctx *Context) ConnectToDB(w web.ResponseWriter, req *web.Request, next web
 		panic(err)
 	}
 	ctx.database = db
+	next(w, req)
 }
 
 func main() {
