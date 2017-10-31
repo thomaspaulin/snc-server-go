@@ -2,8 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
+	"errors"
 )
 
 //-----------------------------------------------//
@@ -14,6 +14,16 @@ type Team struct {
 	Name		string	`json:"name"`
 	Division	string	`json:"division"`
 	LogoURL		string	`json:"logoURL"`
+}
+
+func (t *Team) Save(db *sql.DB) (id uint32, err error) {
+	id = 0
+	if t.ID > 0 {
+		id, err = t.Update(db)
+	} else {
+		id, err = t.Create(db)
+	}
+	return id, err
 }
 
 func (t *Team) Create(db *sql.DB) (id uint32, err error) {
@@ -52,6 +62,7 @@ func FetchTeamByID(db *sql.DB, id uint32) (*Team, error) {
 }
 
 func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
+	// TODO create a new division if there isn't one?
 	rows, err := db.Query(`
 	SELECT
   		teams.team_id  AS team_id,
@@ -80,7 +91,7 @@ func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
 		}
 		teams = append(teams, &t)
 		if len(teams) > 1 {
-			return teams[0], fmt.Errorf("expected only one team to match the criteria but found %d.", len(teams))
+			return teams[0], ErrMultipleTeams
 		}
 	}
 	err = rows.Err()
@@ -91,6 +102,12 @@ func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
 	rows.Close()
 	return teams[0], nil
 }
+
+func (t *Team) Update(db *sql.DB) (id uint32, err error) {
+	return 0, errors.New("not implemented");
+}
+
+var ErrMultipleTeams = errors.New("teams: expected only one team but got multiple")
 
 //-----------------------------------------------//
 // Division
