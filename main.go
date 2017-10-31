@@ -24,29 +24,34 @@ type Context struct {
 	database *sql.DB
 }
 
-func (ctx *Context) ConnectToDB(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	username := os.Getenv("SNC_USER")
-	host := os.Getenv("SNC_HOST")
-	DBName := os.Getenv("SNC_DB")
+var db *sql.DB
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", username, os.Getenv("SNC_PW"), host, DBName)
-	db, _ := sql.Open("postgres", connStr)
+func connect(username string, password string , host string, dbName string) {
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", username, password, host, dbName)
+	conn, _ := sql.Open("postgres", connStr)
 
 	log.Printf("Here's what I'm using to connect to the database:\n" +
-		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
-	err := db.Ping();
+		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, dbName)
+	err := conn.Ping();
 	if err != nil {
 		panic(err)
 	}
-	ctx.database = db
+	db = conn
+}
+
+func (ctx *Context) getDBConnection(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
+	if ctx.database == nil {
+		ctx.database = db
+	}
 	next(w, req)
 }
 
 func main() {
+	connect(os.Getenv("SNC_USER"), os.Getenv("SNC_PW"), os.Getenv("SNC_HOST"), os.Getenv("SNC_DB"))
 	r := web.New(Context{}).
 			Middleware(web.LoggerMiddleware).
 			Middleware(web.ShowErrorsMiddleware).
-			Middleware((*Context).ConnectToDB).
+			Middleware((*Context).getDBConnection).
 			Get("/", Index).
 			Get("/hello", Hello).
 			Get("/matches", (*Context).GetMatches).
