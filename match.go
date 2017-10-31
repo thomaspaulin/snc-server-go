@@ -26,30 +26,73 @@ type Match struct {
 	// Datetime of the match start in UTC
 	Start 		time.Time	`json:"start"`
 	Season		int			`json:"season"`
+	Division	string		`json:"division"`
 	Away 		string		`json:"away"`
 	Home 		string		`json:"home"`
 	AwayScore	int			`json:"awayScore"`
 	HomeScore	int			`json:"homeScore"`
 	Rink		string		`json:"rink"`
 }
+// TODO UPDATE THE DATABASE SCHEMA SO THAT MATCHES HAVE A DIVISION_ID COLUMN
 
 func (m *Match) Save(db *sql.DB) (id uint32, err error) {
 	id = 0
 	if m.ID > 0 {
-		id, err = m.Create(db)
-	} else {
 		id, err = m.Update(db)
+	} else {
+		id, err = m.Create(db)
 	}
 	return id, err
 }
 
+func teamID(teamName string, division string) (id uint32, err error) {
+	team, err := FetchTeam(db, teamName, division)
+	if err == ErrMultipleTeams {
+		// do nothing, we have the first one back anyway
+		return team.ID, nil
+	} else if err != nil {
+		// todo an actual placeholder team logo
+		t := Team{Name: teamName, Division: division, LogoURL: "http://placekitten.com/g/64/64"}
+		return t.Save(db)
+	} else {
+		return team.ID, nil
+	}
+}
+
+func rinkID(rinkName string) (id uint32, err error) {
+	rink, err := FetchRink(db, rinkName)
+	if err != nil {
+		return 0, err
+	} else {
+		return rink.ID, nil
+	}
+}
+
 func (m *Match) Create(db *sql.DB) (id uint32, err error) {
+	// TODO: Save the teams and rinks first so we get the IDs and rink ID
+	awayID, err := teamID(m.Away, m.Division)
+	if err != nil {
+		log.Println("I was unable to find the away team so I tried saving but that failed too. I don't know how to handle this case.")
+		return 0, err
+	}
+	homeID, err := teamID(m.Home, m.Division)
+	if err != nil {
+		log.Println("I was unable to find the home team so I tried saving but that failed too. I don't know how to handle this case.")
+		return 0, err
+	}
+
+	rinkID, err := rinkID(m.Rink)
+	if err != nil {
+		return 0, err
+	}
+	// todo fix this
+
 	db.QueryRow(`
 	INSERT INTO matches
-	 	(start, season, away, home, awayScore, homeScore, rink)
+	 	(start, season, away_id, home_id, away_score, home_score, rink_id)
 	VALUES
 		($1, $2, $3, $4, -1, -1, $5)
-	RETURNING match_id`, m.Start, m.Season, m.Away, m.Home, m.AwayScore, m.HomeScore, m.Rink).Scan(&id)
+	RETURNING match_id`, m.Start, m.Season, awayID, homeID, m.AwayScore, m.HomeScore, rinkID).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
