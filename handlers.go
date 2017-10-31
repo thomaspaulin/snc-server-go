@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"github.com/gocraft/web"
+	"log"
 )
 
 func Index(w web.ResponseWriter, req *web.Request) {
@@ -20,12 +21,14 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
 	matches, err := FetchMatches(ctx.database)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encodeErr := encoder.Encode(matches)
 	if encodeErr != nil {
+		log.Println(err.Error())
 		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
 	}
 	// The JSON encoder seems to write the OK header so we don't need to do it manually
@@ -36,12 +39,14 @@ func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 	matches := make([]*Match, 0)
 	err := decoder.Decode(matches)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	defer req.Body.Close()
 	for _, m := range matches {
 		_, err := m.Save(ctx.database)
 		if err != nil {
+			log.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -54,16 +59,19 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 	}
 	mID, err := strconv.ParseInt(matchID, 10, 32)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	match, err := FetchMatch(ctx.database, uint32(mID))
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(match)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -75,16 +83,19 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 	}
 	tID, err := strconv.ParseInt(teamID, 10, 32)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	team, err := FetchTeamByID(ctx.database, uint32(tID))
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(team)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
