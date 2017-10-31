@@ -100,6 +100,7 @@ func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
 		return nil, err
 	}
 	rows.Close()
+	// todo this is apparently being called on an empty list so 0 is out of bounds
 	return teams[0], nil
 }
 
