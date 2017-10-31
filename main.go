@@ -27,10 +27,11 @@ func main() {
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", username, os.Getenv("SNC_PW"), host, DBName)
 	database.DB, _ = sql.Open("postgres", connStr)
+
+	log.Printf("Here's what I'm using to connect to the database:\n" +
+		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
 	err := database.DB.Ping();
 	if err != nil {
-		log.Printf("Tried with using the following details:\n" +
-			"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
 		panic(err)
 	}
 
