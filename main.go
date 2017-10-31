@@ -57,7 +57,9 @@ func main() {
 			Get("/matches", (*Context).GetMatches).
 			Post("/matches", (*Context).CreateMatches).
 			Get("/matches/:matchID", (*Context).GetSpecificMatches).
-			Get("/teams/:teamID", (*Context).GetSpecificTeam)
+			Get("/teams/:teamID", (*Context).GetSpecificTeam).
+			Get("/rinks", (*Context).GetRinks).
+			Get("/rinks/:rinkID", (*Context).GetSpecificRink)
 
 	log.Printf("Starting up server on port %d\n", port())
 	log.Fatal(http.ListenAndServe("localhost:4242", r))
