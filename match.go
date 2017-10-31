@@ -57,8 +57,16 @@ func (m *Match) Create(db *sql.DB) (id uint32, err error) {
 }
 
 func FetchMatches(db *sql.DB) ([]*Match, error) {
-	// TODO: Redo this query to do join and get the team names. It will fail as is
-	rows, err := db.Query("SELECT * FROM matches")
+	rows, err := db.Query("SELECT " +
+		"m.match_id, m.start, m.season, away.name, home.name, m.away_score, m.home_score, rink.name "+
+		"FROM matches AS m"+
+		"INNER JOIN teams AS home "+
+			"ON home.team_id = m.home_id "+
+		"INNER JOIN teams AS away "+
+			"ON away.team_id = m.away_id "+
+		"INNER JOIN rinks As rink "+
+			"ON rink.rink_id = m.rink_id " +
+		"ORDER BY m.start DESC")
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +92,17 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 
 func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
 	m := Match{ID: id}
-	// TODO redo the query to do joins instead of selecting all columns
-	err := db.QueryRow("SELECT * WHERE id = $1", id).Scan(&m)
+	err := db.QueryRow("SELECT " +
+	"m.match_id, m.start, m.season, away.name, home.name, m.away_score, m.home_score, rink.name "+
+		"FROM matches AS m"+
+		"INNER JOIN teams AS home "+
+		"ON home.team_id = m.home_id "+
+		"INNER JOIN teams AS away "+
+		"ON away.team_id = m.away_id "+
+		"INNER JOIN rinks As rink "+
+		"ON rink.rink_id = m.rink_id " +
+		"ORDER BY m.start DESC " +
+		"WHERE id = $1", id).Scan(&m)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
