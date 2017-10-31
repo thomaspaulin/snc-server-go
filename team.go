@@ -20,11 +20,12 @@ func (t *Team) Create(db *sql.DB) (id uint32, err error) {
 	d := Division{Name: t.Division}
 	divID, err := d.Save(db)
 	id = 0
-	err = db.QueryRow("INSERT INTO teams " +
-									"(name, division_id, logo_url) " +
-								"VALUES " +
-									"($1, $2, $3) " +
-								"RETURNING team_id", t.Name, divID, t.LogoURL).Scan(&id)
+	err = db.QueryRow(`
+	INSERT INTO teams
+		(name, division_id, logo_url)
+	VALUES
+  		($1, $2, $3)
+	RETURNING team_id`, t.Name, divID, t.LogoURL).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -33,13 +34,15 @@ func (t *Team) Create(db *sql.DB) (id uint32, err error) {
 
 func FetchTeamByID(db *sql.DB, id uint32) (*Team, error) {
 	t := Team{ID: id}
-	err := db.QueryRow("SELECT teams.name AS team_name, " +
-								"divisions.name AS div_name, " +
-								"teams.logo_url " +
-							"FROM teams " +
-							"JOIN divisions " +
-								"ON teams.division_id = divisions.division_id " +
-							"WHERE team_id = $1", id).Scan(&t.Name, &t.Division, &t.LogoURL)
+	err := db.QueryRow(`
+	SELECT
+  		teams.name     AS  team_name,
+  		divisions.name AS  div_name,
+  		teams.logo_url
+	FROM (teams
+		JOIN divisions ON teams.division_id = divisions.division_id
+	 )
+	 WHERE team_id = $1`, id).Scan(&t.Name, &t.Division, &t.LogoURL)
 	if err == sql.ErrNoRows {
 		return &Team{}, nil
 	} else if err != nil {
@@ -49,15 +52,18 @@ func FetchTeamByID(db *sql.DB, id uint32) (*Team, error) {
 }
 
 func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
-	rows, err := db.Query("SELECT teams.team_id AS team_id, " +
-									"teams.name AS team_name, " +
-									"divisions.name AS div_name, " +
-									"teams.logo_url " +
-								"FROM teams " +
-								"JOIN divisions " +
-									"ON teams.division_id = divisions.division_id " +
-								"WHERE teams.name = $1 " +
-									"AND divisions.name = $2", teamName, divName)
+	rows, err := db.Query(`
+	SELECT
+  		teams.team_id  AS team_id,
+  		teams.name     AS team_name,
+  		divisions.name AS div_name,
+  		teams.logo_url
+	FROM (teams
+		JOIN divisions
+      	ON teams.division_id = divisions.division_id
+	)
+	WHERE teams.name = $1
+    AND divisions.name = $2`, teamName, divName)
 	if err != nil {
 		// Connection or statement error
 		return nil, err
@@ -104,7 +110,12 @@ func (d *Division) Save(db *sql.DB) (id uint32, err error) {
 
 func (d *Division) Create(db *sql.DB) (id uint32, err error) {
 	id = 0
-	err = db.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.Name).Scan(&id)
+	err = db.QueryRow(`
+		INSERT INTO divisions
+			(name)
+		VALUES
+			($1)
+		RETURNING division_id`, d.Name).Scan(&id)
 	return id, err
 }
 
@@ -112,7 +123,11 @@ func (d *Division) Update(db *sql.DB) (id uint32, err error) {
 	id = 0
 	if d.ID > 0 {
 		// try updating using the ID
-		err = db.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.Name, d.ID).Scan(&id)
+		err = db.QueryRow(`
+			UPDATE divisions
+			SET name = $1
+			WHERE division_id = $2
+			RETURNING division_id`, d.Name, d.ID).Scan(&id)
 	} else {
 		// try updating using the name
 		// this is obsolete while it's only name and ID

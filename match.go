@@ -44,12 +44,12 @@ func (m *Match) Save(db *sql.DB) (id uint32, err error) {
 }
 
 func (m *Match) Create(db *sql.DB) (id uint32, err error) {
-	db.QueryRow("INSERT INTO matches " +
-		"(start, season, away, home, awayScore, homeScore, rink) " +
-		"VALUES " +
-		"($1, $2, $3, $4, -1, -1, $5)" +
-		"RETURNING match_id", m.Start, m.Season, m.Away, m.Home, m.AwayScore, m.HomeScore, m.Rink).
-		Scan(&id)
+	db.QueryRow(`
+	INSERT INTO matches
+	 	(start, season, away, home, awayScore, homeScore, rink)
+	VALUES
+		($1, $2, $3, $4, -1, -1, $5)
+	RETURNING match_id`, m.Start, m.Season, m.Away, m.Home, m.AwayScore, m.HomeScore, m.Rink).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -57,16 +57,20 @@ func (m *Match) Create(db *sql.DB) (id uint32, err error) {
 }
 
 func FetchMatches(db *sql.DB) ([]*Match, error) {
-	rows, err := db.Query("SELECT " +
-		"m.match_id, m.start, m.season, away.name, home.name, m.away_score, m.home_score, rink.name "+
-		"FROM matches AS m"+
-		"INNER JOIN teams AS home "+
-			"ON home.team_id = m.home_id "+
-		"INNER JOIN teams AS away "+
-			"ON away.team_id = m.away_id "+
-		"INNER JOIN rinks As rink "+
-			"ON rink.rink_id = m.rink_id " +
-		"ORDER BY m.start DESC")
+	rows, err := db.Query(`
+	SELECT
+		m.match_id,
+		m.start,
+		m.season,
+		away.name,
+		home.name,
+		m.away_score,
+		m.home_score,
+		rink.name
+	FROM (matches AS m INNER JOIN teams AS home ON home.team_id = m.home_id
+	INNER JOIN teams AS away ON away.team_id = m.away_id
+	INNER JOIN rinks AS rink ON rink.rink_id = m.rink_id)
+	ORDER BY m.start DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -92,17 +96,20 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 
 func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
 	m := Match{ID: id}
-	err := db.QueryRow("SELECT " +
-	"m.match_id, m.start, m.season, away.name, home.name, m.away_score, m.home_score, rink.name "+
-		"FROM matches AS m"+
-		"INNER JOIN teams AS home "+
-		"ON home.team_id = m.home_id "+
-		"INNER JOIN teams AS away "+
-		"ON away.team_id = m.away_id "+
-		"INNER JOIN rinks As rink "+
-		"ON rink.rink_id = m.rink_id " +
-		"ORDER BY m.start DESC " +
-		"WHERE id = $1", id).Scan(&m)
+	err := db.QueryRow(`
+	SELECT
+		m.match_id,
+		m.start,
+		m.season,
+		away.name,
+		home.name,
+		m.away_score,
+		m.home_score,
+		rink.name
+	FROM (matches AS m INNER JOIN teams AS home ON home.team_id = m.home_id
+	INNER JOIN teams AS away ON away.team_id = m.away_id
+	INNER JOIN rinks AS rink ON rink.rink_id = m.rink_id)
+	WHERE match_id = $1`, id).Scan(&m)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
