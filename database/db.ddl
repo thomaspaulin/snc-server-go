@@ -98,6 +98,8 @@ create unique index rink_name_uindex
   on rinks (name)
 ;
 
+insert into rinks (rink_id, name) values (0, 'Unknown');
+
 alter table matches
   add constraint rink_id_fk
 foreign key (rink_id) references rinks
