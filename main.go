@@ -12,7 +12,7 @@ import (
 )
 
 func port() string {
-	p := os.Getenv("PORT")
+	p := os.Getenv("SNC_SERV_PORT")
 	if p != "" {
 		return ":" + p
 	}
@@ -20,15 +20,17 @@ func port() string {
 }
 
 func main() {
-	var err error
 	// todo
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", 
-			os.Getenv("SNC_USER"), 
-			os.Getenv("SNC_PW"), 
-			os.Getenv("SNC_HOST"), 
-			os.Getenv("SNC_DB"))
-	database.DB, err = sql.Open("postgres", connStr)
+	username := os.Getenv("SNC_USER")
+	host := os.Getenv("SNC_HOST")
+	DBName := os.Getenv("SNC_DB")
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", username, os.Getenv("SNC_PW"), host, DBName)
+	database.DB, _ = sql.Open("postgres", connStr)
+	err := database.DB.Ping();
 	if err != nil {
+		log.Printf("Tried with using the following details:\n" +
+			"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
 		panic(err)
 	}
 
