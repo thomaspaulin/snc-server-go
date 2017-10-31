@@ -24,7 +24,7 @@ func (t *Team) Create() (id uint32, err error) {
 	err = database.DB.QueryRow("INSERT INTO teams " +
 									"(name, division_id, logo_url) " +
 								"VALUES " +
-									"(?, ?, ?) " +
+									"($1, $2, $3) " +
 								"RETURNING team_id", t.name, divID, t.logoURL).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
@@ -40,7 +40,7 @@ func FetchTeamByID(id uint32) (*Team, error) {
 							"FROM teams " +
 							"JOIN divisions " +
 								"ON teams.division_id = divisions.division_id " +
-							"WHERE team_id = ?", id).Scan(&t.id, &t.division, &t.logoURL)
+							"WHERE team_id = $1", id).Scan(&t.name, &t.division, &t.logoURL)
 	if err == sql.ErrNoRows {
 		return &Team{}, nil
 	} else if err != nil {
@@ -57,8 +57,8 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 								"FROM teams " +
 								"JOIN divisions " +
 									"ON teams.division_id = divisions.division_id " +
-								"WHERE teams.name = ? " +
-									"AND divisions.name = ?", teamName, divName)
+								"WHERE teams.name = $1 " +
+									"AND divisions.name = $2", teamName, divName)
 	if err != nil {
 		// Connection or statement error
 		return nil, err
@@ -105,7 +105,7 @@ func (d *Division) Save() (id uint32, err error) {
 
 func (d *Division) Create() (id uint32, err error) {
 	id = 0
-	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES (?) RETURNING division_id", d.name).Scan(&id)
+	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.name).Scan(&id)
 	return id, err
 }
 
@@ -113,7 +113,7 @@ func (d *Division) Update() (id uint32, err error) {
 	id = 0
 	if d.id > 0 {
 		// try updating using the ID
-		err = database.DB.QueryRow("UPDATE divisions SET name = ? WHERE division_id = ? RETURNING division_id", d.name, d.id).Scan(&id)
+		err = database.DB.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.name, d.id).Scan(&id)
 	} else {
 		// try updating using the name
 		// this is obsolete while it's only name and ID

@@ -93,7 +93,7 @@ func (m *Match) Create() (id uint32, err error) {
 	database.DB.QueryRow("INSERT INTO matches " +
 		"(start, season, away, home, awayScore, homeScore, rink) " +
 		"VALUES " +
-		"(?, ?, ?, ?, -1, -1, ?)" +
+		"($1, $2, $3, $4, -1, -1, $5)" +
 		"RETURNING match_id", m.start, m.season, m.away, m.home, m.awayScore, m.homeScore, m.rink).
 		Scan(&id)
 	if err != nil {
@@ -131,7 +131,7 @@ func FetchMatches() ([]*Match, error) {
 func FetchMatch(id uint32) (*Match, error) {
 	m := Match{id: id}
 	// TODO redo the query to do joins instead of selecting all columns
-	err := database.DB.QueryRow("SELECT * WHERE id = ?", id).Scan(&m)
+	err := database.DB.QueryRow("SELECT * WHERE id = $1", id).Scan(&m)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
