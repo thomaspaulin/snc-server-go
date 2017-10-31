@@ -22,29 +22,29 @@ const (
 // Models
 
 type Match struct {
-	id			uint32
+	ID			uint32		`json:"id"`
 	// Datetime of the match start in UTC
-	start 		time.Time
-	season		int
-	away 		string
-	home 		string
-	awayScore	int
-	homeScore	int
-	rink		string
+	Start 		time.Time	`json:"start"`
+	Season		int			`json:"season"`
+	Away 		string		`json:"away"`
+	Home 		string		`json:"home"`
+	AwayScore	int			`json:"awayScore"`
+	HomeScore	int			`json:"homeScore"`
+	Rink		string		`json:"rink"`
 }
 
 // TODO: unify the match and match summary classes? In a way they are the same thing
 type MatchSummary struct {
-	matchId		uint32
+	MatchID		uint32		`json:"matchId"`
 	// Datetime of the match start in UTC
-	start		time.Time
-	away		string
-	home		string
-	awayScore	int
-	homeScore	int
-	rink		string
-	goals		[]*Goal
-	penalties	[]*Penalty
+	Start		time.Time	`json:"start"`
+	Away		string		`json:"away"`
+	Home		string		`json:"home"`
+	AwayScore	int			`json:"awayScore"`
+	HomeScore	int			`json:"homeScore"`
+	Rink		string		`json:"rink"`
+	Goals		[]*Goal		`json:"goals"`
+	Penalties	[]*Penalty	`json:"penalties"`
 	// todo:
 	//  - shots (per team, per period)
 	//  - power plays (per team, successful and total)
@@ -52,36 +52,36 @@ type MatchSummary struct {
 }
 
 type Goal struct {
-	id			uint32
-	goalType	string
+	ID			uint32		`json:"id"`
+	GoalType	string		`json:"goalType"`
 	// ID of the team that scored
-	team		string
-	period		uint
+	Team		string		`json:"team"`
+	Period		uint		`json:"period"`
 	// Seconds left in the period when the goal was scored
-	time		uint
+	Time		uint		`json:"time"`
 	// ID of the scoring player
-	scorer		string
-	assists		[]string
+	Scorer		string		`json:"scorer"`
+	Assists		[]string	`json:"assists"`
 }
 
 type Penalty struct {
-	id			uint32
-	team		string
-	period		uint
+	ID			uint32		`json:"id"`
+	Team		string		`json:"team"`
+	Period		uint		`json:"period"`
 	// Seconds left in the period when the penalty was incurred
-	time		uint
+	Time		uint		`json:"time"`
 	// Name of the penalty
-	offense		string
+	Offense		string		`json:"offense"`
 	// ID of the offender
-	offender	string
+	Offender	string		`json:"offender"`
 	// Penalty Infraction Minutes
-	pim			uint
+	PIM			uint		`json:"pim"`
 }
 
 // Database logic
 func (m *Match) Save() (id uint32, err error) {
 	id = 0
-	if m.id > 0 {
+	if m.ID > 0 {
 		id, err = m.Create()
 	} else {
 		id, err = m.Update()
@@ -94,7 +94,7 @@ func (m *Match) Create() (id uint32, err error) {
 		"(start, season, away, home, awayScore, homeScore, rink) " +
 		"VALUES " +
 		"($1, $2, $3, $4, -1, -1, $5)" +
-		"RETURNING match_id", m.start, m.season, m.away, m.home, m.awayScore, m.homeScore, m.rink).
+		"RETURNING match_id", m.Start, m.Season, m.Away, m.Home, m.AwayScore, m.HomeScore, m.Rink).
 		Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
@@ -113,7 +113,7 @@ func FetchMatches() ([]*Match, error) {
 	matches := make([]*Match, 0)
 	for rows.Next() {
 		m := Match{}
-		err := rows.Scan(&m.id, &m.start, &m.season, &m.away, &m.home, &m.awayScore, &m.homeScore, &m.rink)
+		err := rows.Scan(&m.ID, &m.Start, &m.Season, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
 		// err here is the row.Scan(...) error. It shadows the err from outside the loop, and does not overwrite
 		if err != nil {
 			// probably the schema is wrong or the row is bad and so the database needs inspecting
@@ -129,7 +129,7 @@ func FetchMatches() ([]*Match, error) {
 }
 
 func FetchMatch(id uint32) (*Match, error) {
-	m := Match{id: id}
+	m := Match{ID: id}
 	// TODO redo the query to do joins instead of selecting all columns
 	err := database.DB.QueryRow("SELECT * WHERE id = $1", id).Scan(&m)
 	if err == sql.ErrNoRows {

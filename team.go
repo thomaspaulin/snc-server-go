@@ -11,21 +11,21 @@ import (
 // Team
 //-----------------------------------------------//
 type Team struct {
-	id			uint32	`json:"id"`
-	name		string	`json:"name"`
-	division	string	`json:"division"`
-	logoURL		string	`json:"logoURL"`
+	ID			uint32	`json:"id"`
+	Name		string	`json:"name"`
+	Division	string	`json:"division"`
+	LogoURL		string	`json:"logoURL"`
 }
 
 func (t *Team) Create() (id uint32, err error) {
-	d := Division{name: t.division}
+	d := Division{Name: t.Division}
 	divID, err := d.Save()
 	id = 0
 	err = database.DB.QueryRow("INSERT INTO teams " +
 									"(name, division_id, logo_url) " +
 								"VALUES " +
 									"($1, $2, $3) " +
-								"RETURNING team_id", t.name, divID, t.logoURL).Scan(&id)
+								"RETURNING team_id", t.Name, divID, t.LogoURL).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -33,14 +33,14 @@ func (t *Team) Create() (id uint32, err error) {
 }
 
 func FetchTeamByID(id uint32) (*Team, error) {
-	t := Team{id: id}
+	t := Team{ID: id}
 	err := database.DB.QueryRow("SELECT teams.name AS team_name, " +
 								"divisions.name AS div_name, " +
 								"teams.logo_url " +
 							"FROM teams " +
 							"JOIN divisions " +
 								"ON teams.division_id = divisions.division_id " +
-							"WHERE team_id = $1", id).Scan(&t.name, &t.division, &t.logoURL)
+							"WHERE team_id = $1", id).Scan(&t.Name, &t.Division, &t.LogoURL)
 	if err == sql.ErrNoRows {
 		return &Team{}, nil
 	} else if err != nil {
@@ -68,7 +68,7 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 	teams := []*Team{}
 	for rows.Next() {
 		t := Team{}
-		err := rows.Scan(&t.id, &t.name, &t.division, &t.logoURL)
+		err := rows.Scan(&t.ID, &t.Name, &t.Division, &t.LogoURL)
 		if err != nil {
 			// Row parsing error
 			return nil, err
@@ -91,12 +91,12 @@ func FetchTeam(teamName string, divName string) (*Team, error) {
 // Division
 //-----------------------------------------------//
 type Division struct {
-	id			uint32
-	name		string
+	ID			uint32	`json:"id"`
+	Name		string	`json:"name"`
 }
 
 func (d *Division) Save() (id uint32, err error) {
-	if d.id > 0 {
+	if d.ID > 0 {
 		return d.Update()
 	} else {
 		return d.Create()
@@ -105,15 +105,15 @@ func (d *Division) Save() (id uint32, err error) {
 
 func (d *Division) Create() (id uint32, err error) {
 	id = 0
-	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.name).Scan(&id)
+	err = database.DB.QueryRow("INSERT INTO divisions (name) VALUES ($1) RETURNING division_id", d.Name).Scan(&id)
 	return id, err
 }
 
 func (d *Division) Update() (id uint32, err error) {
 	id = 0
-	if d.id > 0 {
+	if d.ID > 0 {
 		// try updating using the ID
-		err = database.DB.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.name, d.id).Scan(&id)
+		err = database.DB.QueryRow("UPDATE divisions SET name = $1 WHERE division_id = $2 RETURNING division_id", d.Name, d.ID).Scan(&id)
 	} else {
 		// try updating using the name
 		// this is obsolete while it's only name and ID
@@ -125,22 +125,22 @@ func (d *Division) Update() (id uint32, err error) {
 // Player
 //-----------------------------------------------//
 type Player struct {
-	id			uint32
-	number		uint
-	name		string
-	teams		[]string
-	position	string
+	ID			uint32		`json:"id"`
+	Number		uint		`json:"number"`
+	Name		string		`json:"name"`
+	Teams		[]string	`json:"teams"`
+	Position	string		`json:"position"`
 }
 
 //-----------------------------------------------//
 // Goalie
 //-----------------------------------------------//
 type Goalie struct {
-	id			uint32
-	number		uint
-	name		string
-	teams		[]string
-	shots		uint
-	saves		uint
-	mins		uint
+	ID			uint32		`json:"id"`
+	Number		uint		`json:"number"`
+	Name		string		`json:"name"`
+	Teams		[]string	`json:"teams"`
+	Shots		uint		`json:"shots"`
+	Saves		uint		`json:"saves"`
+	Mins		uint		`json:"mins"`
 }
