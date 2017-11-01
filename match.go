@@ -35,32 +35,32 @@ type Match struct {
 }
 // TODO UPDATE THE DATABASE SCHEMA SO THAT MATCHES HAVE A DIVISION_ID COLUMN
 
-func (m *Match) Save(db *sql.DB) (id uint32, err error) {
+func (m *Match) Save(DB *sql.DB) (id uint32, err error) {
 	id = 0
 	if m.ID > 0 {
-		id, err = m.Update(db)
+		id, err = m.Update(DB)
 	} else {
-		id, err = m.Create(db)
+		id, err = m.Create(DB)
 	}
 	return id, err
 }
 
 func teamID(teamName string, division string) (id uint32, err error) {
-	team, err := FetchTeam(db, teamName, division)
+	team, err := FetchTeam(DB, teamName, division)
 	if err == ErrMultipleTeams {
 		// do nothing, we have the first one back anyway
 		return team.ID, nil
 	} else if err != nil {
 		// todo an actual placeholder team logo
 		t := Team{Name: teamName, Division: division, LogoURL: "http://placekitten.com/g/64/64"}
-		return t.Save(db)
+		return t.Save(DB)
 	} else {
 		return team.ID, nil
 	}
 }
 
 func rinkID(rinkName string) (id uint32, err error) {
-	rink, err := FetchRink(db, rinkName)
+	rink, err := FetchRink(DB, rinkName)
 	if err != nil {
 		return 0, err
 	} else {
@@ -68,7 +68,7 @@ func rinkID(rinkName string) (id uint32, err error) {
 	}
 }
 
-func (m *Match) Create(db *sql.DB) (id uint32, err error) {
+func (m *Match) Create(DB *sql.DB) (id uint32, err error) {
 	// TODO: Save the teams and rinks first so we get the IDs and rink ID
 	awayID, err := teamID(m.Away, m.Division)
 	if err != nil {
@@ -87,7 +87,7 @@ func (m *Match) Create(db *sql.DB) (id uint32, err error) {
 	}
 	// todo fix this
 
-	db.QueryRow(`
+	DB.QueryRow(`
 	INSERT INTO matches
 	 	(start, season, away_id, home_id, away_score, home_score, rink_id)
 	VALUES
@@ -99,8 +99,8 @@ func (m *Match) Create(db *sql.DB) (id uint32, err error) {
 	return id, nil
 }
 
-func FetchMatches(db *sql.DB) ([]*Match, error) {
-	rows, err := db.Query(`
+func FetchMatches(DB *sql.DB) ([]*Match, error) {
+	rows, err := DB.Query(`
 	SELECT
 		m.match_id,
 		m.start,
@@ -137,9 +137,9 @@ func FetchMatches(db *sql.DB) ([]*Match, error) {
 	return matches, nil
 }
 
-func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
+func FetchMatch(DB *sql.DB, id uint32) (*Match, error) {
 	m := Match{ID: id}
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 	SELECT
 		m.match_id,
 		m.start,
@@ -161,7 +161,7 @@ func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
 	return &m, nil
 }
 
-func (m *Match) Update(db *sql.DB) (id uint32, err error) {
+func (m *Match) Update(DB *sql.DB) (id uint32, err error) {
 	return 0, errors.New("not implemented");
 }
 

@@ -19,7 +19,7 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 
 // todo figure out a way get context in as well calling methods on the struct
 func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
-	matches, err := FetchMatches(ctx.database)
+	matches, err := FetchMatches(ctx.DB)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -44,7 +44,7 @@ func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 	}
 	defer req.Body.Close()
 	for _, m := range matches {
-		_, err := m.Save(ctx.database)
+		_, err := m.Save(ctx.DB)
 		if err != nil {
 			log.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	match, err := FetchMatch(ctx.database, uint32(mID))
+	match, err := FetchMatch(ctx.DB, uint32(mID))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -77,7 +77,7 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 }
 
 func (ctx *Context) GetTeams(w web.ResponseWriter, req *web.Request) {
-	teams, err := FetchTeams(ctx.database)
+	teams, err := FetchTeams(ctx.DB)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	team, err := FetchTeamByID(ctx.database, uint32(tID))
+	team, err := FetchTeamByID(ctx.DB, uint32(tID))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -116,7 +116,7 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 }
 
 func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
-	rinks, err := FetchRinks(ctx.database)
+	rinks, err := FetchRinks(ctx.DB)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -140,7 +140,7 @@ func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	rink, err := FetchRinkByID(ctx.database, uint32(rID))
+	rink, err := FetchRinkByID(ctx.DB, uint32(rID))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

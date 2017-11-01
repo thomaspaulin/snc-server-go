@@ -21,12 +21,12 @@ func port() int {
 }
 
 type Context struct {
-	database *sql.DB
+	DB *sql.DB
 }
 
-var db *sql.DB
+var DB *sql.DB
 
-func connect(username string, password string , host string, dbName string) {
+func Connect(username string, password string , host string, dbName string) (*sql.DB) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, dbName)
 	conn, _ := sql.Open("postgres", connStr)
 
@@ -36,18 +36,19 @@ func connect(username string, password string , host string, dbName string) {
 	if err != nil {
 		panic(err)
 	}
-	db = conn
+	return conn
 }
 
 func (ctx *Context) getDBConnection(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	if ctx.database == nil {
-		ctx.database = db
+	if ctx.DB == nil {
+		ctx.DB = DB
 	}
 	next(w, req)
 }
 
 func main() {
-	connect(os.Getenv("SNC_USER"), os.Getenv("SNC_PW"), os.Getenv("SNC_HOST"), os.Getenv("SNC_DB"))
+	DB = Connect(os.Getenv("SNC_USER"), os.Getenv("SNC_PW"), os.Getenv("SNC_HOST"), os.Getenv("SNC_DB"))
+	defer DB.Close()
 	r := web.New(Context{}).
 			Middleware(web.LoggerMiddleware).
 			Middleware(web.ShowErrorsMiddleware).
