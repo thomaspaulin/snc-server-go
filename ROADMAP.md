@@ -1,5 +1,4 @@
 # Road Map
-0. Create views in the database of the joins to avoid having to do them
 1. Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
     1. Teams
         1. Read
@@ -32,6 +31,7 @@
 9. Add goalie match stats endpoint
 10. Create columns/tables to log creation and modified, and add a deletion flag
 11. Consider moving to gin-gonic/gin because it has had commits within the past few months until gocraft/web which last had a commit 2 years ago
+12. Consider using views
 
 .
 .
