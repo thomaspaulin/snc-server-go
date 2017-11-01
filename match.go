@@ -152,7 +152,7 @@ func FetchMatch(db *sql.DB, id uint32) (*Match, error) {
 	FROM (matches AS m INNER JOIN teams AS home ON home.team_id = m.home_id
 	INNER JOIN teams AS away ON away.team_id = m.away_id
 	INNER JOIN rinks AS rink ON rink.rink_id = m.rink_id)
-	WHERE match_id = $1`, id).Scan(&m)
+	WHERE match_id = $1`, id).Scan(&m.ID, &m.Start, &m.Season, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {
