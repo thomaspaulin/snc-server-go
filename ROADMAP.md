@@ -1,7 +1,7 @@
 # Road Map
 1. Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
     1. Teams
-        1. Read
+        1. ~~Read~~
         2. Create
         3. Update
     2. Divisions
@@ -11,7 +11,7 @@
     3. Matches
         1. Read
     4. Rinks
-        1. Read
+        1. ~~Read~~
         2. Create
 2. Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
 3. Create DB queries for players

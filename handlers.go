@@ -76,6 +76,21 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 	}
 }
 
+func (ctx *Context) GetTeams(w web.ResponseWriter, req *web.Request) {
+	teams, err := FetchTeams(ctx.database)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encodeErr := encoder.Encode(teams)
+	if encodeErr != nil {
+		log.Println(err.Error())
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+	}
+}
+
 func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 	teamID := req.PathParams["teamID"]
 	if teamID == "" {

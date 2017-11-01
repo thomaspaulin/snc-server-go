@@ -27,7 +27,7 @@ type Context struct {
 var db *sql.DB
 
 func connect(username string, password string , host string, dbName string) {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s", username, password, host, dbName)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, dbName)
 	conn, _ := sql.Open("postgres", connStr)
 
 	log.Printf("Here's what I'm using to connect to the database:\n" +
@@ -57,6 +57,7 @@ func main() {
 			Get("/matches", (*Context).GetMatches).
 			Post("/matches", (*Context).CreateMatches).
 			Get("/matches/:matchID", (*Context).GetSpecificMatches).
+			Get("/teams", (*Context).GetTeams).
 			Get("/teams/:teamID", (*Context).GetSpecificTeam).
 			Get("/rinks", (*Context).GetRinks).
 			Get("/rinks/:rinkID", (*Context).GetSpecificRink)

@@ -61,6 +61,44 @@ func FetchTeamByID(db *sql.DB, id uint32) (*Team, error) {
 	return &t, nil
 }
 
+func FetchTeams(db *sql.DB) ([]Team, error) {
+	// TODO create a new division if there isn't one?
+	rows, err := db.Query(`
+	SELECT
+  		teams.team_id  AS team_id,
+  		teams.name     AS team_name,
+  		divisions.name AS div_name,
+  		teams.logo_url
+	FROM (teams
+		JOIN divisions
+      	ON teams.division_id = divisions.division_id
+	)
+    ORDER BY team_id`)
+	if err != nil {
+		// Connection or statement error
+		return nil, err
+	}
+	defer rows.Close()
+
+	teams := []Team{}
+	for rows.Next() {
+		t := Team{}
+		err := rows.Scan(&t.ID, &t.Name, &t.Division, &t.LogoURL)
+		if err != nil {
+			// Row parsing error
+			return nil, err
+		}
+		teams = append(teams, t)
+	}
+	err = rows.Err()
+	if err != nil {
+		// Errors within rows
+		return nil, err
+	}
+	rows.Close()
+	return teams, nil
+}
+
 func FetchTeam(db *sql.DB, teamName string, divName string) (*Team, error) {
 	// TODO create a new division if there isn't one?
 	rows, err := db.Query(`
