@@ -42,8 +42,8 @@ INSERT INTO team_players (team_id, player_id) VALUES (3, 7);
 INSERT INTO team_players (team_id, player_id) VALUES (4, 8);
 
 -- Create matches
-INSERT INTO matches (start, season, away_id, home_id, away_score, home_score, rink_id) VALUES (NOW(), 2017, 1, 2, -1, -1, 1);
-INSERT INTO matches (start, season, away_id, home_id, away_score, home_score, rink_id) VALUES (NOW() - INTERVAL '2' MONTH, 2017, 3, 4, 3, 1, 2);
+INSERT INTO matches (start, season, status, away_id, home_id, away_score, home_score, rink_id) VALUES (NOW(), 2017, 'Upcoming', 1, 2, 0, 0, 1);
+INSERT INTO matches (start, season, status, away_id, home_id, away_score, home_score, rink_id) VALUES (NOW() - INTERVAL '2' MONTH, 2017, 'Over', 3, 4, 3, 1, 2);
 
 -- TODO inserts for all the remaining tables
 

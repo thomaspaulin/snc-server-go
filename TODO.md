@@ -29,7 +29,6 @@
     b. Update queries
 8. Add player match stats endpoint
 9. Add goalie match stats endpoint
-10. Give matches a status column and use it to determine if a game has been played or not. Then use 0 as the default for scores rather than -1 and make score unsigned
 11. Create columns/tables to log creation and modified, and add a deletion flag
 12. Consider moving to gin-gonic/gin because it has had commits within the past few months until gocraft/web which last had a commit 2 years ago
 13. Consider using views

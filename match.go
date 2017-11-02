@@ -9,13 +9,17 @@ import (
 
 // todo handle the errors properly
 const (
-	PracticeGame = 		"PR"
-	RegularGame = 		"RS"
-	PlayoffGame = 		"PO"
+	PracticeGame 	= 	"PR"
+	RegularGame 	= 	"RS"
+	PlayoffGame 	= 	"PO"
 
-	RegularGoal = 		"RG"
-	PowerPlayGoal = 	"PP"
+	RegularGoal 	= 	"RG"
+	PowerPlayGoal 	= 	"PP"
 	ShortHandedGoal = 	"SH"
+
+	Upcoming 		=	"Upcoming"
+	Underway		=	"Underway"
+	Over			=	"Over"
 )
 
 //-----------------------------------------------//
@@ -26,11 +30,12 @@ type Match struct {
 	// Datetime of the match start in UTC
 	Start 		time.Time	`json:"start"`
 	Season		int			`json:"season"`
+	Status		string		`json:"status"`
 	Division	string		`json:"division"`
 	Away 		string		`json:"away"`
 	Home 		string		`json:"home"`
-	AwayScore	int			`json:"awayScore"`
-	HomeScore	int			`json:"homeScore"`
+	AwayScore	uint32		`json:"awayScore"`
+	HomeScore	uint32		`json:"homeScore"`
 	Rink		string		`json:"rink"`
 }
 // TODO UPDATE THE DATABASE SCHEMA SO THAT MATCHES HAVE A DIVISION_ID COLUMN
@@ -89,10 +94,10 @@ func (m *Match) Create(DB *sql.DB) (id uint32, err error) {
 
 	DB.QueryRow(`
 	INSERT INTO matches
-	 	(start, season, away_id, home_id, away_score, home_score, rink_id)
+	 	(start, season, status, away_id, home_id, away_score, home_score, rink_id)
 	VALUES
-		($1, $2, $3, $4, -1, -1, $5)
-	RETURNING match_id`, m.Start, m.Season, awayID, homeID, m.AwayScore, m.HomeScore, rinkID).Scan(&id)
+		($1, $2, $3, $4, $5, 0, 0, $6)
+	RETURNING match_id`, m.Start, m.Season, m.Status, awayID, homeID, m.AwayScore, m.HomeScore, rinkID).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -105,6 +110,7 @@ func FetchMatches(DB *sql.DB) ([]*Match, error) {
 		m.match_id,
 		m.start,
 		m.season,
+		m.status,
 		away.name,
 		home.name,
 		m.away_score,
@@ -122,7 +128,7 @@ func FetchMatches(DB *sql.DB) ([]*Match, error) {
 	matches := make([]*Match, 0)
 	for rows.Next() {
 		m := Match{}
-		err := rows.Scan(&m.ID, &m.Start, &m.Season, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
+		err := rows.Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
 		// err here is the row.Scan(...) error. It shadows the err from outside the loop, and does not overwrite
 		if err != nil {
 			// probably the schema is wrong or the row is bad and so the database needs inspecting
@@ -144,6 +150,7 @@ func FetchMatch(DB *sql.DB, id uint32) (*Match, error) {
 		m.match_id,
 		m.start,
 		m.season,
+		m.status,
 		away.name,
 		home.name,
 		m.away_score,
@@ -152,7 +159,7 @@ func FetchMatch(DB *sql.DB, id uint32) (*Match, error) {
 	FROM (matches AS m INNER JOIN teams AS home ON home.team_id = m.home_id
 	INNER JOIN teams AS away ON away.team_id = m.away_id
 	INNER JOIN rinks AS rink ON rink.rink_id = m.rink_id)
-	WHERE match_id = $1`, id).Scan(&m.ID, &m.Start, &m.Season, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
+	WHERE match_id = $1`, id).Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
 	if err == sql.ErrNoRows {
 		return &Match{}, nil
 	} else if err != nil {

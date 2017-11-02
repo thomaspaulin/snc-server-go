@@ -63,14 +63,15 @@ create table matches
     primary key,
   start timestamp not null,
   season integer default 2017,
+  status varchar(8) default 'Upcoming',
   away_id integer not null
     constraint away_team_id_fk
     references teams,
   home_id integer not null
     constraint home_team_id_fk
     references teams,
-  away_score integer default '-1'::integer,
-  home_score integer default '-1'::integer,
+  away_score integer default 0::integer,
+  home_score integer default 0::integer,
   rink_id integer not null,
   constraint matches_start_home_id_away_id_pk
   unique (start, home_id, away_id)
