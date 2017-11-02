@@ -205,6 +205,21 @@ func FetchDivisions(DB *sql.DB) ([]Division, error) {
 	return divs, nil
 }
 
+func FetchDivisionByID(DB *sql.DB, id uint32) (Division, error) {
+	d := Division{ID: id}
+	err := DB.QueryRow(`
+	SELECT
+		division_id, name
+	FROM divisions
+	WHERE division_id = $1`, id).Scan(&d.ID, &d.Name)
+	if err == sql.ErrNoRows {
+		return Division{}, nil
+	} else if err != nil {
+		return Division{}, err
+	}
+	return d, nil
+}
+
 func (d *Division) Update(DB *sql.DB) (id uint32, err error) {
 	id = 0
 	if d.ID > 0 {

@@ -187,3 +187,27 @@ func (ctx *Context) GetDivisions(w web.ResponseWriter, req *web.Request) {
 		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
 	}
 }
+
+func (ctx *Context) GetSpecificDivision(w web.ResponseWriter, req *web.Request) {
+	divisionID := req.PathParams["divisionID"]
+	if divisionID == "" {
+		http.Error(w, "Missing division ID", http.StatusBadRequest)
+	}
+	dID, err := strconv.ParseInt(divisionID, 10, 32)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	div, err := FetchDivisionByID(ctx.DB, uint32(dID))
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(div)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
