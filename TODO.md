@@ -16,7 +16,9 @@
 2. Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
 3. Create DB queries for players
 4. Create players endpoint
-    1. Alter Team struct to include players
+    1. Alter Team struct to include players. This will require:
+        1. Update the join table
+        2. Logic to update the player struct to include who they play for
     2. Update queries
         1. Create
         2. Read
