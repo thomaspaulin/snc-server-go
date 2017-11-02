@@ -156,17 +156,17 @@ type Division struct {
 	Name		string	`json:"name"`
 }
 
-func (d *Division) Save(db *sql.DB) (id uint32, err error) {
+func (d *Division) Save(DB *sql.DB) (id uint32, err error) {
 	if d.ID > 0 {
-		return d.Update(db)
+		return d.Update(DB)
 	} else {
-		return d.Create(db)
+		return d.Create(DB)
 	}
 }
 
-func (d *Division) Create(db *sql.DB) (id uint32, err error) {
+func (d *Division) Create(DB *sql.DB) (id uint32, err error) {
 	id = 0
-	err = db.QueryRow(`
+	err = DB.QueryRow(`
 		INSERT INTO divisions
 			(name)
 		VALUES
@@ -175,11 +175,41 @@ func (d *Division) Create(db *sql.DB) (id uint32, err error) {
 	return id, err
 }
 
-func (d *Division) Update(db *sql.DB) (id uint32, err error) {
+func FetchDivisions(DB *sql.DB) ([]Division, error) {
+	rows, err := DB.Query(`
+	SELECT
+  		division_id, name
+	FROM divisions`)
+	if err != nil {
+		// Connection or statement error
+		return nil, err
+	}
+	defer rows.Close()
+
+	divs := []Division{}
+	for rows.Next() {
+		d := Division{}
+		err := rows.Scan(&d.ID, &d.Name)
+		if err != nil {
+			// Row parsing error
+			return nil, err
+		}
+		divs = append(divs, d)
+	}
+	err = rows.Err()
+	if err != nil {
+		// Errors within rows
+		return nil, err
+	}
+	rows.Close()
+	return divs, nil
+}
+
+func (d *Division) Update(DB *sql.DB) (id uint32, err error) {
 	id = 0
 	if d.ID > 0 {
 		// try updating using the ID
-		err = db.QueryRow(`
+		err = DB.QueryRow(`
 			UPDATE divisions
 			SET name = $1
 			WHERE division_id = $2

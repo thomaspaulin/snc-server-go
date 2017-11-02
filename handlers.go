@@ -24,6 +24,10 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 // With great power comes great responsibility (and also flexibility in this case)
 
 // todo figure out a way get context in as well calling methods on the struct
+
+//------------------------------------------------------------------------------------------------//
+// Matches
+//------------------------------------------------------------------------------------------------//
 func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
 	matches, err := FetchMatches(ctx.DB)
 	if err != nil {
@@ -82,6 +86,9 @@ func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
 	}
 }
 
+//------------------------------------------------------------------------------------------------//
+// Teams
+//------------------------------------------------------------------------------------------------//
 func (ctx *Context) GetTeams(w web.ResponseWriter, req *web.Request) {
 	teams, err := FetchTeams(ctx.DB)
 	if err != nil {
@@ -121,6 +128,9 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 	}
 }
 
+//------------------------------------------------------------------------------------------------//
+// Rinks
+//------------------------------------------------------------------------------------------------//
 func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
 	rinks, err := FetchRinks(ctx.DB)
 	if err != nil {
@@ -157,5 +167,23 @@ func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+//------------------------------------------------------------------------------------------------//
+// Divisions
+//------------------------------------------------------------------------------------------------//
+func (ctx *Context) GetDivisions(w web.ResponseWriter, req *web.Request) {
+	divs, err := FetchDivisions(ctx.DB)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encodeErr := encoder.Encode(divs)
+	if encodeErr != nil {
+		log.Println(encodeErr.Error())
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
 	}
 }

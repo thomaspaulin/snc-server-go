@@ -61,7 +61,8 @@ func main() {
 			Get("/teams", (*Context).GetTeams).
 			Get("/teams/:teamID", (*Context).GetSpecificTeam).
 			Get("/rinks", (*Context).GetRinks).
-			Get("/rinks/:rinkID", (*Context).GetSpecificRink)
+			Get("/rinks/:rinkID", (*Context).GetSpecificRink).
+			Get("/divisions/", (*Context).GetDivisions)
 
 	log.Printf("Starting up server on port %d\n", port())
 	log.Fatal(http.ListenAndServe("localhost:4242", r))

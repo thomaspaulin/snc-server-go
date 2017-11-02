@@ -5,14 +5,14 @@
         2. Create
         3. Update
     2. Divisions
-        1. Read
+        1. ~~Read~~
         2. Create
         3. Update
     3. Matches
         1. Read
     4. Rinks
         1. ~~Read~~
-        2. Create
+        2. ~~Create~~
 2. Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
 3. Create DB queries for players
 4. Create players endpoint
