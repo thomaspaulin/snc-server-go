@@ -17,6 +17,12 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 	io.WriteString(w, "Hello, world!\n")
 }
 
+//
+// ALL THE CALLER TO CHOOSE CREATE OR UPDATE BASED ON THEIR METHOD BUT IF THEY TRY TO CREATE SOMETHING THAT EXISTS USE AN ERROR CODE TO DENOTE THAT
+// 404 FOR UPDATE
+// TODO redo the functions here to reflect that
+// With great power comes great responsibility (and also flexibility in this case)
+
 // todo figure out a way get context in as well calling methods on the struct
 func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
 	matches, err := FetchMatches(ctx.DB)
