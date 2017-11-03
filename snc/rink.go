@@ -1,4 +1,4 @@
-package main
+package snc
 
 import (
 	"database/sql"
