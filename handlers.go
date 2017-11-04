@@ -18,13 +18,7 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 	io.WriteString(w, "Hello, world!\n")
 }
 
-//
-// ALL THE CALLER TO CHOOSE CREATE OR UPDATE BASED ON THEIR METHOD BUT IF THEY TRY TO CREATE SOMETHING THAT EXISTS USE AN ERROR CODE TO DENOTE THAT
-// 404 FOR UPDATE
-// TODO redo the functions here to reflect that
-// With great power comes great responsibility (and also flexibility in this case)
-
-// todo figure out a way get context in as well calling methods on the struct
+// todo
 
 //------------------------------------------------------------------------------------------------//
 // Matches
@@ -201,15 +195,36 @@ func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
 }
 
 func (ctx *Context) UpdateRink(w web.ResponseWriter, req *web.Request) {
+	rinkID := req.PathParams["rinkID"]
+	if rinkID == "" {
+		http.Error(w, "Missing rink ID", http.StatusBadRequest)
+	}
+	rID, err := strconv.ParseInt(rinkID, 10, 32)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	decoder := json.NewDecoder(req.Body)
 	defer req.Body.Close()
 	r := snc.Rink{}
-	err := decoder.Decode(&r)
+	err = decoder.Decode(&r)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if r.ID != 0 && r.ID != uint32(rID) {
+		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided.
+				They must be both, or you must omit the ID in the JSON and that in the path will be used`
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	} else if r.ID == 0 {
+		// ID wasn't provided so assume the one in the URL
+		r.ID = uint32(rID)
+	}
+	// else case is the ID and path param ID match so proceed
 	err = ctx.RinkService.UpdateRink(&r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -283,15 +298,35 @@ func (ctx *Context) GetSpecificDivision(w web.ResponseWriter, req *web.Request) 
 }
 
 func (ctx *Context) UpdateDivision(w web.ResponseWriter, req *web.Request) {
+	divisionID := req.PathParams["divisionID"]
+	if divisionID == "" {
+		http.Error(w, "Missing division ID", http.StatusBadRequest)
+	}
+	dID, err := strconv.ParseInt(divisionID, 10, 32)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	decoder := json.NewDecoder(req.Body)
 	defer req.Body.Close()
 	d := snc.Division{}
-	err := decoder.Decode(&d)
+	err = decoder.Decode(&d)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if d.ID != 0 && d.ID != uint32(dID) {
+		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	} else if d.ID == 0 {
+		// ID wasn't provided so assume the one in the URL
+		d.ID = uint32(dID)
+	}
+	// else case is the ID and path param ID match so proceed
 	err = ctx.DivisionService.UpdateDivision(&d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

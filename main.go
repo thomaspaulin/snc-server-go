@@ -71,6 +71,8 @@ func main() {
 	defer DB.Close()
 
 	// todo find a way to do it such that the services aren't in the context
+	// todo rename updateX to be more in line with replaceX
+	// todo use PATCH to update parts of an entity and
 
 	r := web.New(Context{}).
 			Middleware(web.LoggerMiddleware).
@@ -82,12 +84,15 @@ func main() {
 			//Get("/matches", (*Context).GetMatches).
 			//Post("/matches", (*Context).CreateMatches).
 			//Get("/matches/:matchID", (*Context).GetSpecificMatches).
+
 			Get("/teams", (*Context).GetTeams).
 			Get("/teams/:teamID", (*Context).GetSpecificTeam).
+
 			Get("/rinks", (*Context).GetRinks).
 			Get("/rinks/:rinkID", (*Context).GetSpecificRink).
 			Post("/rinks", (*Context).CreateRink).
-			Put("/rink/:rinkID", (*Context).UpdateRink).
+			Put("/rinks/:rinkID", (*Context).UpdateRink).
+
 			Get("/divisions", (*Context).GetDivisions).
 			Get("/divisions/:divisionID", (*Context).GetSpecificDivision).
 			Post("divisions", (*Context).CreateDivision).
