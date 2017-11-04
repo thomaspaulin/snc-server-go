@@ -27,6 +27,7 @@ type Context struct {
 
 	// TODO these are temporary
 	DivisionService snc.DivisionService
+	RinkService		snc.RinkService
 	TeamService 	snc.TeamService
 }
 
@@ -43,6 +44,9 @@ func (ctx *Context) initServices(w web.ResponseWriter, req *web.Request, next we
 
 	ts := &postgres.TeamService{DB: ctx.DB}
 	ctx.TeamService = ts
+
+	rs := &postgres.RinkService{DB: ctx.DB}
+	ctx.RinkService = rs
 
 	next(w, req)
 }
@@ -80,12 +84,14 @@ func main() {
 			//Get("/matches/:matchID", (*Context).GetSpecificMatches).
 			Get("/teams", (*Context).GetTeams).
 			Get("/teams/:teamID", (*Context).GetSpecificTeam).
-			//Get("/rinks", (*Context).GetRinks).
-			//Get("/rinks/:rinkID", (*Context).GetSpecificRink).
+			Get("/rinks", (*Context).GetRinks).
+			Get("/rinks/:rinkID", (*Context).GetSpecificRink).
+			Post("/rinks", (*Context).CreateRink).
+			Put("/rink/:rinkID", (*Context).UpdateRink).
 			Get("/divisions", (*Context).GetDivisions).
 			Get("/divisions/:divisionID", (*Context).GetSpecificDivision).
 			Post("divisions", (*Context).CreateDivision).
-			Put("divisions", (*Context).UpdateDivision)
+			Put("divisions/:divisionID", (*Context).UpdateDivision)
 
 	log.Printf("main: starting up server on port %d\n", port())
 	log.Fatal(http.ListenAndServe("localhost:4242", r))

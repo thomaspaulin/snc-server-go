@@ -138,44 +138,84 @@ func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
 //------------------------------------------------------------------------------------------------//
 // Rinks
 //------------------------------------------------------------------------------------------------//
-//func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
-//	rinks, err := FetchRinks(ctx.DB)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	encodeErr := encoder.Encode(rinks)
-//	if encodeErr != nil {
-//		log.Println(err.Error())
-//		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-//	}
-//}
-//
-//func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
-//	teamID := req.PathParams["rinkID"]
-//	if teamID == "" {
-//		http.Error(w, "Missing rink ID", http.StatusBadRequest)
-//	}
-//	rID, err := strconv.ParseInt(teamID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	rink, err := FetchRinkByID(ctx.DB, uint32(rID))
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	err = encoder.Encode(rink)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//}
+func (ctx *Context) CreateRink(w web.ResponseWriter, req *web.Request) {
+	decoder := json.NewDecoder(req.Body)
+	defer req.Body.Close()
+	r := snc.Rink{}
+	err := decoder.Decode(&r)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = ctx.RinkService.CreateRink(&r)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
+	rinks, err := ctx.RinkService.Rinks()
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encodeErr := encoder.Encode(rinks)
+	if encodeErr != nil {
+		log.Println(err.Error())
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
+	teamID := req.PathParams["rinkID"]
+	if teamID == "" {
+		http.Error(w, "Missing rink ID", http.StatusBadRequest)
+	}
+	rID, err := strconv.ParseInt(teamID, 10, 32)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	rink, err := ctx.RinkService.Rink(int(rID))
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(rink)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ctx *Context) UpdateRink(w web.ResponseWriter, req *web.Request) {
+	decoder := json.NewDecoder(req.Body)
+	defer req.Body.Close()
+	r := snc.Rink{}
+	err := decoder.Decode(&r)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = ctx.RinkService.UpdateRink(&r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
 
 //------------------------------------------------------------------------------------------------//
 // Divisions
