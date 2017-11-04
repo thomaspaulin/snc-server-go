@@ -91,7 +91,8 @@ func (ds *DivisionService) DeleteDivision(id int) error {
 		UPDATE divisions SET
 			deleted = TRUE
 		WHERE
-			division_id = $1`).Scan()
+			division_id = $1
+		RETURNING deleted`).Scan()
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -175,7 +176,8 @@ func (rs *RinkService) UpdateRink(r *snc.Rink) error {
 	SET
 		name = $1
 	WHERE
-		rink_id = $2 AND deleted IS FALSE`, r.Name, r.ID).Scan()
+		rink_id = $2 AND deleted IS FALSE
+	RETURNING rink_id`, r.Name, r.ID).Scan()
 	if err != nil {
 		// in future when there are more columns I'd use the name here to uniquely identify rinks and update the other
 		// columns but at present it's a bit pointless looking up using name then updating name (ID should be fixed)
@@ -189,7 +191,8 @@ func (rs *RinkService) DeleteRink(id int) error {
 		UPDATE rinks SET
 			deleted = TRUE
 		WHERE
-			rink_id = $1`).Scan()
+			rink_id = $1
+		RETURNING deleted`, id).Scan()
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -286,7 +289,8 @@ func (ts *TeamService) UpdateTeam(t *snc.Team) error {
 		UPDATE teams SET
 			name = $1
 		WHERE
-			team_id = $2 AND deleted IS FALSE`, t.Name, t.ID).Scan()
+			team_id = $2 AND deleted IS FALSE
+		RETURNING team_id`, t.Name, t.ID).Scan()
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -298,7 +302,8 @@ func (ts *TeamService) DeleteTeam(id int) error {
 		UPDATE teams SET
 			deleted = TRUE
 		WHERE
-			team_id = $1`).Scan()
+			team_id = $1
+		RETURNING deleted`, id).Scan()
 	if err != nil {
 		log.Println(err.Error());
 	}
