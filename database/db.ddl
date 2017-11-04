@@ -7,7 +7,8 @@ create table teams
     constraint teams_name_pk
     unique,
   division_id integer not null,
-  logo_url varchar(128)
+  logo_url varchar(128),
+  deleted boolean default false not null
 )
 ;
 
@@ -24,7 +25,8 @@ create table divisions
   division_id serial not null
     constraint divisions_pkey
     primary key,
-  name varchar(20) not null
+  name varchar(20) not null,
+  deleted boolean default false not null
 )
 ;
 
@@ -48,7 +50,8 @@ create table players
     primary key,
   jersey_number integer not null,
   player_name varchar(48) not null,
-  position varchar(1) not null
+  position varchar(1) not null,
+  deleted boolean default false not null
 )
 ;
 
@@ -63,16 +66,17 @@ create table matches
     primary key,
   start timestamp not null,
   season integer default 2017,
-  status varchar(8) default 'Upcoming',
+  status varchar(8) default 'Upcoming'::character varying,
   away_id integer not null
     constraint away_team_id_fk
     references teams,
   home_id integer not null
     constraint home_team_id_fk
     references teams,
-  away_score integer default 0::integer,
-  home_score integer default 0::integer,
+  away_score integer default 0,
+  home_score integer default 0,
   rink_id integer not null,
+  deleted boolean default false not null,
   constraint matches_start_home_id_away_id_pk
   unique (start, home_id, away_id)
 )
@@ -87,7 +91,8 @@ create table rinks
   rink_id serial not null
     constraint rink_pkey
     primary key,
-  name varchar(20) not null
+  name varchar(20) not null,
+  deleted boolean default false not null
 )
 ;
 
@@ -121,6 +126,7 @@ create table goals
   match_id integer not null
     constraint goals_matches_match_id_fk
     references matches,
+  deleted boolean default false not null,
   constraint goals_team_id_period_time_scorer_id_pk
   unique (team_id, period, time, scorer_id)
 )
@@ -148,6 +154,7 @@ create table penalties
   match_id integer not null
     constraint penalties_matches_match_id_fk
     references matches,
+  deleted boolean default false not null,
   constraint penalties_team_id_period_time_offender_id_offense_pk
   unique (team_id, period, time, offender_id, offense)
 )
@@ -220,6 +227,7 @@ create table match_player_stats
   goals smallint default 0,
   assists smallint default 0,
   pim smallint default 0,
+  deleted boolean default false not null,
   constraint match_player_stats_match_id_player_id_pk
   primary key (match_id, player_id)
 )
@@ -236,6 +244,7 @@ create table match_goalie_stats
   shots_faced smallint default 0,
   saves smallint default 0,
   mins smallint default 0,
+  deleted boolean default false not null,
   constraint match_goalie_stats_match_id_goalie_id_pk
   primary key (match_id, goalie_id)
 )
