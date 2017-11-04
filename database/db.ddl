@@ -66,6 +66,9 @@ create table matches
     primary key,
   start timestamp not null,
   season integer default 2017,
+  division_id integer
+    constraint match_division_id_fk
+    references divisions,
   status varchar(8) default 'Upcoming'::character varying,
   away_id integer not null
     constraint away_team_id_fk
