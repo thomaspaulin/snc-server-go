@@ -6,8 +6,8 @@
         3. Update
     2. Divisions
         1. ~~Read~~
-        2. Create
-        3. Update
+        2. ~~Create~~
+        3. ~~Update~~
     3. Matches
         1. Read
     4. Rinks
@@ -31,7 +31,8 @@
     b. Update queries
 * Add player match stats endpoint
 * Add goalie match stats endpoint
-* Create columns/tables to log creation and modified, and add a deletion flag
+* Create columns/tables to log creation and modified
+* Return 404s instead of no rows in result from Scan()
+* Think about how deleting an item in each table woul affect others in order to get the cascading right
 * Consider moving to gin-gonic/gin because it has had commits within the past few months until gocraft/web which last had a commit 2 years ago
-* Restructure according to https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1
 * Transactions for the database
