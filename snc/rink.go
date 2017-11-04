@@ -6,8 +6,8 @@ const (
 )
 
 type Rink struct {
-	ID		uint32
-	Name	string
+	ID		uint32	`json:"id"`
+	Name	string	`json:"name"`
 }
 
 type RinkService interface {
