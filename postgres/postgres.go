@@ -74,12 +74,13 @@ func (ds *DivisionService) Divisions() ([]*snc.Division, error) {
 }
 
 func (ds *DivisionService) UpdateDivision(d *snc.Division) error {
+	id := 0
 	err := ds.DB.QueryRow(`
 		UPDATE divisions SET
 			name = $1
 		WHERE
 			division_id = $2 AND deleted IS FALSE
-		RETURNING division_id`, d.Name, d.ID).Scan()
+		RETURNING division_id`, d.Name, d.ID).Scan(&id)
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -87,12 +88,13 @@ func (ds *DivisionService) UpdateDivision(d *snc.Division) error {
 }
 
 func (ds *DivisionService) DeleteDivision(id int) error {
+	deleted := false
 	err := ds.DB.QueryRow(`
 		UPDATE divisions SET
 			deleted = TRUE
 		WHERE
 			division_id = $1
-		RETURNING deleted`).Scan()
+		RETURNING deleted`).Scan(&deleted)
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -109,12 +111,13 @@ type RinkService struct {
 }
 
 func (rs *RinkService) CreateRink(r *snc.Rink) error {
+	id := 0
 	err := rs.DB.QueryRow(`
 		INSERT INTO rinks
 			(name)
 		VALUES
 			($1)
-		RETURNING rink_id`, r.Name).Scan()
+		RETURNING rink_id`, r.Name).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -171,13 +174,14 @@ func (rs *RinkService) Rinks() ([]*snc.Rink, error) {
 }
 
 func (rs *RinkService) UpdateRink(r *snc.Rink) error {
+	id := 0
 	err := rs.DB.QueryRow(`
 	UPDATE rinks
 	SET
 		name = $1
 	WHERE
 		rink_id = $2 AND deleted IS FALSE
-	RETURNING rink_id`, r.Name, r.ID).Scan()
+	RETURNING rink_id`, r.Name, r.ID).Scan(&id)
 	if err != nil {
 		// in future when there are more columns I'd use the name here to uniquely identify rinks and update the other
 		// columns but at present it's a bit pointless looking up using name then updating name (ID should be fixed)
@@ -187,12 +191,13 @@ func (rs *RinkService) UpdateRink(r *snc.Rink) error {
 }
 
 func (rs *RinkService) DeleteRink(id int) error {
+	deleted := false
 	err := rs.DB.QueryRow(`
 		UPDATE rinks SET
 			deleted = TRUE
 		WHERE
 			rink_id = $1
-		RETURNING deleted`, id).Scan()
+		RETURNING deleted`, id).Scan(&deleted)
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -285,12 +290,13 @@ func (ts *TeamService) Teams() ([]*snc.Team, error) {
 }
 
 func (ts *TeamService) UpdateTeam(t *snc.Team) error {
+	id := 0
 	err := ts.DB.QueryRow(`
 		UPDATE teams SET
 			name = $1
 		WHERE
 			team_id = $2 AND deleted IS FALSE
-		RETURNING team_id`, t.Name, t.ID).Scan()
+		RETURNING team_id`, t.Name, t.ID).Scan(&id)
 	if err != nil {
 		log.Println(err.Error());
 	}
@@ -298,12 +304,13 @@ func (ts *TeamService) UpdateTeam(t *snc.Team) error {
 }
 
 func (ts *TeamService) DeleteTeam(id int) error {
+	deleted := false
 	err := ts.DB.QueryRow(`
 		UPDATE teams SET
 			deleted = TRUE
 		WHERE
 			team_id = $1
-		RETURNING deleted`, id).Scan()
+		RETURNING deleted`, id).Scan(&deleted)
 	if err != nil {
 		log.Println(err.Error());
 	}
