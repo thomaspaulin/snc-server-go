@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"github.com/thomaspaulin/snc-server-go/postgres"
 	"github.com/thomaspaulin/snc-server-go/snc"
-	"github.com/gocraft/web"
 	"fmt"
 	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 func port() int {
@@ -33,22 +33,23 @@ type Context struct {
 
 var DB *sql.DB
 
-func (ctx *Context) getDBConnection(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	ctx.DB = DB
-	next(w, req)
+func setDBConnection(ctx *gin.Context) {
+	ctx.Set("DB", DB)
 }
 
-func (ctx *Context) initServices(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	ds := &postgres.DivisionService{DB: ctx.DB}
-	ctx.DivisionService = ds
+func initServices(ctx *gin.Context) {
+	s := &Services{}
 
-	ts := &postgres.TeamService{DB: ctx.DB}
-	ctx.TeamService = ts
+	ds := &postgres.DivisionService{DB: ctx.Keys["DB"].(*sql.DB)}
+	s.DivisionService = ds
 
-	rs := &postgres.RinkService{DB: ctx.DB}
-	ctx.RinkService = rs
+	ts := &postgres.TeamService{DB: ctx.Keys["DB"].(*sql.DB)}
+	s.TeamService = ts
 
-	next(w, req)
+	rs := &postgres.RinkService{DB: ctx.Keys["DB"].(*sql.DB)}
+	s.RinkService = rs
+
+	ctx.Set("services", s)
 }
 
 func main() {
@@ -74,30 +75,26 @@ func main() {
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
 
-	r := web.New(Context{}).
-			Middleware(web.LoggerMiddleware).
-			Middleware(web.ShowErrorsMiddleware).
-			Middleware((*Context).getDBConnection).
-			Middleware((*Context).initServices).
-			Get("/", Index).
-			Get("/hello", Hello).
+	router := gin.Default()
+	router.Use(setDBConnection)
+	router.Use(initServices)
+	router.GET("/", Index)
+	router.GET("/hello", Hello)
+
 			//Get("/matches", (*Context).GetMatches).
 			//Post("/matches", (*Context).CreateMatches).
-			//Get("/matches/:matchID", (*Context).GetSpecificMatches).
-
-			Get("/teams", (*Context).GetTeams).
-			Get("/teams/:teamID", (*Context).GetSpecificTeam).
-
-			Get("/rinks", (*Context).GetRinks).
-			Get("/rinks/:rinkID", (*Context).GetSpecificRink).
-			Post("/rinks", (*Context).CreateRink).
-			Put("/rinks/:rinkID", (*Context).UpdateRink).
-
-			Get("/divisions", (*Context).GetDivisions).
-			Get("/divisions/:divisionID", (*Context).GetSpecificDivision).
-			Post("divisions", (*Context).CreateDivision).
-			Put("divisions/:divisionID", (*Context).UpdateDivision)
+			//Get("/matches/:matchID", (*Context).GetSpecificMatches)
+	router.GET("/teams", GetTeams)
+	router.GET("/teams/:teamID", GetSpecificTeam)
+	router.GET("/rinks", GetRinks)
+	//router.GET("/rinks/:rinkID", GetSpecificRink)
+	router.POST("/rinks", CreateRink)
+	//router.PUT("/rinks/:rinkID", UpdateRink)
+	//router.GET("/divisions", GetDivisions)
+	//router.GET("/divisions/:divisionID", GetSpecificDivision)
+	router.POST("divisions", CreateDivision)
+	//router.PUT("divisions/:divisionID", UpdateDivision)
 
 	log.Printf("main: starting up server on port %d\n", port())
-	log.Fatal(http.ListenAndServe("localhost:4242", r))
+	log.Fatal(http.ListenAndServe("localhost:4242", router))
 }
