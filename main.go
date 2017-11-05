@@ -37,19 +37,47 @@ func setDBConnection(ctx *gin.Context) {
 	ctx.Set("DB", DB)
 }
 
-func initServices(ctx *gin.Context) {
-	s := &Services{}
+func initServices(DB *sql.DB) Services {
+	s := Services{}
 
-	ds := &postgres.DivisionService{DB: ctx.Keys["DB"].(*sql.DB)}
+	ds := &postgres.DivisionService{DB: DB}
 	s.DivisionService = ds
 
-	ts := &postgres.TeamService{DB: ctx.Keys["DB"].(*sql.DB)}
+	ts := &postgres.TeamService{DB: DB}
 	s.TeamService = ts
 
-	rs := &postgres.RinkService{DB: ctx.Keys["DB"].(*sql.DB)}
+	rs := &postgres.RinkService{DB: DB}
 	s.RinkService = rs
 
-	ctx.Set("services", s)
+	return s
+}
+
+func APIEngine(s Services) *gin.Engine {
+	r := gin.Default()
+	r.Use(func(c *gin.Context) {
+		c.Set("services", &s)
+	})
+
+	v1 := r.Group("/v1")
+	{
+		v1.GET("/", Index)
+		v1.GET("/hello", Hello)
+
+		//Get("/matches", (*Context).GetMatches).
+		//Post("/matches", (*Context).CreateMatches).
+		//Get("/matches/:matchID", (*Context).GetSpecificMatches)
+		v1.GET("/teams", GetTeams)
+		v1.GET("/teams/:teamID", GetSpecificTeam)
+		v1.GET("/rinks", GetRinks)
+		v1.GET("/rinks/:rinkID", GetSpecificRink)
+		v1.POST("/rinks", CreateRink)
+		v1.PUT("/rinks/:rinkID", UpdateRink)
+		v1.GET("/divisions", GetDivisions)
+		v1.GET("/divisions/:divisionID", GetSpecificDivision)
+		v1.POST("divisions", CreateDivision)
+		v1.PUT("divisions/:divisionID", UpdateDivision)
+	}
+	return r
 }
 
 func main() {
@@ -75,26 +103,8 @@ func main() {
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
 
-	router := gin.Default()
+	router := APIEngine(initServices(DB))
 	router.Use(setDBConnection)
-	router.Use(initServices)
-	router.GET("/", Index)
-	router.GET("/hello", Hello)
-
-			//Get("/matches", (*Context).GetMatches).
-			//Post("/matches", (*Context).CreateMatches).
-			//Get("/matches/:matchID", (*Context).GetSpecificMatches)
-	router.GET("/teams", GetTeams)
-	router.GET("/teams/:teamID", GetSpecificTeam)
-	router.GET("/rinks", GetRinks)
-	router.GET("/rinks/:rinkID", GetSpecificRink)
-	router.POST("/rinks", CreateRink)
-	router.PUT("/rinks/:rinkID", UpdateRink)
-	router.GET("/divisions", GetDivisions)
-	router.GET("/divisions/:divisionID", GetSpecificDivision)
-	router.POST("divisions", CreateDivision)
-	router.PUT("divisions/:divisionID", UpdateDivision)
-
 	log.Printf("main: starting up server on port %d\n", port())
 	log.Fatal(http.ListenAndServe("localhost:4242", router))
 }
