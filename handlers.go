@@ -98,7 +98,6 @@ func Hello(c *gin.Context) {
 // Teams
 //------------------------------------------------------------------------------------------------//
 func GetTeams(c *gin.Context) {
-	log.Println("all teams")
 	s, err := services(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
