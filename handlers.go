@@ -170,71 +170,55 @@ func GetRinks(c *gin.Context) {
 	c.JSON(http.StatusOK, rinks)
 }
 
-//func GetSpecificRink(c *gin.Context) {
-//	teamID := req.PathParams["rinkID"]
-//	if teamID == "" {
-//		http.Error(w, "Missing rink ID", http.StatusBadRequest)
-//	}
-//	rID, err := strconv.ParseInt(teamID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	rink, err := ctx.RinkService.Rink(int(rID))
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	err = encoder.Encode(rink)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//}
-//
-//func UpdateRink(c *gin.Context) {
-//	rinkID := req.PathParams["rinkID"]
-//	if rinkID == "" {
-//		http.Error(w, "Missing rink ID", http.StatusBadRequest)
-//	}
-//	rID, err := strconv.ParseInt(rinkID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	decoder := json.NewDecoder(req.Body)
-//	defer req.Body.Close()
-//	r := snc.Rink{}
-//	err = decoder.Decode(&r)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusBadRequest)
-//		return
-//	}
-//	if r.ID != 0 && r.ID != uint32(rID) {
-//		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided.
-//				They must be both, or you must omit the ID in the JSON and that in the path will be used`
-//		log.Println(msg)
-//		http.Error(w, msg, http.StatusBadRequest)
-//		return
-//	} else if r.ID == 0 {
-//		// ID wasn't provided so assume the one in the URL
-//		r.ID = uint32(rID)
-//	}
-//	// else case is the ID and path param ID match so proceed
-//	err = ctx.RinkService.UpdateRink(&r)
-//	if err != nil {
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//}
-//
+func GetSpecificRink(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	rinkID := c.Param("rinkID")
+	if rinkID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(rinkID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	rID, err := strconv.Atoi(rinkID)
+	r, err := s.RinkService.Rink(int(rID))
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, r)
+}
+
+func UpdateRink(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	rinkID := c.Param("rinkID")
+	if rinkID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(rinkID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	rID, err := strconv.Atoi(rinkID)
+	r := snc.Rink{}
+	if err = c.BindJSON(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if r.ID != 0 && r.ID != uint32(rID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if r.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			r.ID = uint32(rID)
+		}
+		if err := s.RinkService.UpdateRink(&r); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
 //------------------------------------------------------------------------------------------------//
 // Divisions
 //------------------------------------------------------------------------------------------------//
@@ -253,83 +237,68 @@ func CreateDivision(c *gin.Context) {
 	}
 }
 
-//func GetDivisions(c *gin.Context) {
-//	divs, err := ctx.DivisionService.Divisions()
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	encodeErr := encoder.Encode(divs)
-//	if encodeErr != nil {
-//		log.Println(encodeErr.Error())
-//		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//}
-//
-//func GetSpecificDivision(c *gin.Context) {
-//	divisionID := req.PathParams["divisionID"]
-//	if divisionID == "" {
-//		http.Error(w, "Missing division ID", http.StatusBadRequest)
-//	}
-//	dID, err := strconv.ParseInt(divisionID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	div, err := ctx.DivisionService.Division(int(dID))
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	err = encoder.Encode(div)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//}
-//
-//func UpdateDivision(c *gin.Context) {
-//	divisionID := req.PathParams["divisionID"]
-//	if divisionID == "" {
-//		http.Error(w, "Missing division ID", http.StatusBadRequest)
-//	}
-//	dID, err := strconv.ParseInt(divisionID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	decoder := json.NewDecoder(req.Body)
-//	defer req.Body.Close()
-//	d := snc.Division{}
-//	err = decoder.Decode(&d)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusBadRequest)
-//		return
-//	}
-//	if d.ID != 0 && d.ID != uint32(dID) {
-//		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
-//		log.Println(msg)
-//		http.Error(w, msg, http.StatusBadRequest)
-//		return
-//	} else if d.ID == 0 {
-//		// ID wasn't provided so assume the one in the URL
-//		d.ID = uint32(dID)
-//	}
-//	// else case is the ID and path param ID match so proceed
-//	err = ctx.DivisionService.UpdateDivision(&d)
-//	if err != nil {
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//}
+func GetDivisions(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	divisions, err := s.DivisionService.Divisions()
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(divisions) == 0 {
+		divisions = make([]*snc.Division, 0)
+	}
+	c.JSON(http.StatusOK, divisions)
+}
+
+func GetSpecificDivision(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	divisionID := c.Param("divisionID")
+	if divisionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(divisionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	dID, err := strconv.Atoi(divisionID)
+	d, err := s.DivisionService.Division(int(dID))
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, d)
+}
+
+func UpdateDivision(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	divisionID := c.Param("divisionID")
+	if divisionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(divisionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	dID, err := strconv.Atoi(divisionID)
+	d := snc.Division{}
+	if err = c.BindJSON(&d); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if d.ID != 0 && d.ID != uint32(dID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if d.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			d.ID = uint32(dID)
+		}
+		if err := s.DivisionService.UpdateDivision(&d); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
