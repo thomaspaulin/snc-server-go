@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
+	"time"
 )
 
 // https://github.com/gin-gonic/gin/issues/55
@@ -23,6 +24,45 @@ func TestMain(m *testing.M) {
 	// do the tear down
 
 	os.Exit(retCode)
+}
+
+func TestGetMatches(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/matches", nil)
+
+	matches := make([]*snc.Match, 2)
+	matches[0] = &snc.Match{
+		ID: 1,
+		Start: time.Date(2017, 4, 15, 4, 30, 0, 0, time.UTC),
+		Division: "C",
+		Season: 2017,
+		Status: snc.Over,
+		Away: "Bears",
+		Home: "Tigers",
+		AwayScore: 3,
+		HomeScore: 1,
+		Rink: "Botany"}
+
+	s := Services{}
+	ms := mock.MatchService{}
+	ms.MatchesFn = func() ([]*snc.Match, error) {
+		return matches, nil
+	}
+
+	s.MatchService = &ms
+
+	// this means the entire API has to be created again for each test :(
+	r := APIEngine(s)
+	r.ServeHTTP(w, req)
+
+	assert.True(t, ms.MatchesInvoked)
+	assert.Equal(t, 200, w.Code)
+
+	actual := make([]*snc.Match, 1)
+	json.NewDecoder(w.Body).Decode(&actual)
+
+	// todo is this looking at memory address or contents?
+	assert.Equal(t, matches, actual)
 }
 
 func TestGetTeams(t *testing.T) {

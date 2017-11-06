@@ -11,6 +11,7 @@ import (
 
 type Services struct {
 	DivisionService		snc.DivisionService
+	MatchService		snc.MatchService
 	TeamService			snc.TeamService
 	RinkService			snc.RinkService
 }
@@ -36,22 +37,23 @@ func Hello(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Matches
 //------------------------------------------------------------------------------------------------//
-//func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
-//	matches, err := FetchMatches(ctx.DB)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	encodeErr := encoder.Encode(matches)
-//	if encodeErr != nil {
-//		log.Println(err.Error())
-//		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-//	}
-//	// The JSON encoder seems to write the OK header so we don't need to do it manually
-//}
-//
+func GetMatches(c *gin.Context) {
+	s, err := services(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
+	}
+	matches, err := s.MatchService.Matches()
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(matches) == 0 {
+		matches = make([]*snc.Match, 0)
+	}
+	c.JSON(http.StatusOK, matches)
+}
+
 //func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 //	decoder := json.NewDecoder(req.Body)
 //	matches := make([]*Match, 0)

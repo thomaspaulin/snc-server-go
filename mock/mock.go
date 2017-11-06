@@ -49,6 +49,52 @@ func (ds *DivisionService) DeleteDivision(id int) error {
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
+// Matches
+//--------------------------------------------------------------------------------------------------------------------//
+// MatchService represents a mock implementation of snc.MatchService
+type MatchService struct {
+	CreateFn			func(t *snc.Match) error
+	CreateInvoked		bool
+
+	MatchFn				func(id int) (*snc.Match, error)
+	MatchInvoked			bool
+
+	MatchesFn			func() ([]*snc.Match, error)
+	MatchesInvoked		bool
+
+	UpdateFn			func(t *snc.Match) error
+	UpdateInvoked		bool
+
+	DeleteFn			func(id int) error
+	DeleteInvoked		bool
+}
+
+func (ms *MatchService) CreateMatch(m *snc.Match) error {
+	ms.CreateInvoked = true
+	return ms.CreateFn(m)
+}
+
+func (ms *MatchService) Match(id int) (*snc.Match, error) {
+	ms.MatchInvoked = true
+	return ms.MatchFn(id)
+}
+
+func (ms *MatchService) Matches() ([]*snc.Match, error) {
+	ms.MatchesInvoked = true
+	return ms.MatchesFn()
+}
+
+func (ms MatchService) UpdateMatch(m *snc.Match) error {
+	ms.UpdateInvoked = true
+	return ms.UpdateFn(m)
+}
+
+func (ms *MatchService) DeleteMatch(id int) error {
+	ms.DeleteInvoked = true
+	return ms.DeleteFn(id)
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 // Teams
 //--------------------------------------------------------------------------------------------------------------------//
 // TeamService represents a mock implementation of snc.TeamService

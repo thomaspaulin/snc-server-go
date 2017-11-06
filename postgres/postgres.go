@@ -113,101 +113,104 @@ type MatchService struct {
 
 // todo match divisions
 
-//func (ms *MatchService) CreateMatch(m *snc.Match) error {
-//	id := 0
-//	err := ms.DB.QueryRow(`
-//	INSERT INTO matches
-//	 	(start, season, status, away_id, home_id, away_score, home_score, rink_id)
-//	VALUES
-//		($1, $2, $3, $4, $5, 0, 0, $6)
-//	RETURNING match_id`, m.Start, m.Season, m.Status, awayID, homeID, m.AwayScore, m.HomeScore, rinkID).Scan(&id)
-//	if err != nil {
-//		log.Println(err.Error())
-//	}
-//	return err
-//}
-//
-//func (ms *MatchService) Match(id int) (*snc.Match, error) {
-//	m := snc.Match{}
-//	err := ms.DB.QueryRow(`
-//	SELECT
-//		m.match_id,
-//		m.start,
-//		m.season,
-//		m.status,
-//		away.name,
-//		home.name,
-//		m.away_score,
-//		m.home_score,
-//		rink.name
-//	FROM (matches AS m
-//		INNER JOIN teams AS home
-//			ON home.team_id = m.home_id
-//		INNER JOIN teams AS away
-//			ON away.team_id = m.away_id
-//		INNER JOIN rinks AS rink
-//			ON rink.rink_id = m.rink_id)
-//	WHERE m.match_id = $1 AND m.deleted IS FALSE`, id).
-//		Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
-//	if err == sql.ErrNoRows {
-//		return nil, nil
-//	} else if err != nil {
-//		return nil, err
-//	}
-//	return &m, nil
-//}
-//
-//func (ms *MatchService) Matches() ([]*snc.Match, error) {
-//	rows, err := ms.DB.Query(`
-//	SELECT
-//		m.match_id,
-//		m.start,
-//		m.season,
-//		m.status,
-//		away.name,
-//		home.name,
-//		m.away_score,
-//		m.home_score,
-//		rink.name
-//	FROM (matches AS m
-//		INNER JOIN teams AS home
-//			ON home.team_id = m.home_id
-//		INNER JOIN teams AS away
-//			ON away.team_id = m.away_id
-//		INNER JOIN rinks AS rink
-//			ON rink.rink_id = m.rink_id)
-//	WHERE m.deleted IS FALSE
-//	ORDER BY m.start DESC`)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer rows.Close()
-//
-//	matches := make([]*snc.Match, 0)
-//	for rows.Next() {
-//		m := snc.Match{}
-//		err := rows.Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
-//		// err here is the row.Scan(...) error. It shadows the err from outside the loop, and does not overwrite
-//		if err != nil {
-//			// probably the schema is wrong or the row is bad and so the database needs inspecting
-//			// later on this might want to be changed to pass through and list the IDs of the bad rows
-//			return nil, err
-//		}
-//		matches = append(matches, &m)
-//	}
-//	if err = rows.Err(); err != nil {
-//		return nil, err
-//	}
-//	return matches, nil
-//}
-//
-//func (ms *MatchService) UpdateMatch(m *snc.Match) error {
-//
-//}
-//
-//func (ms *MatchService) DeleteMatch(id int) error {
-//
-//}
+func (ms *MatchService) CreateMatch(m *snc.Match) error {
+	//id := 0
+	//err := ms.DB.QueryRow(`
+	//INSERT INTO matches
+	// 	(start, season, status, away_id, home_id, away_score, home_score, rink_id)
+	//VALUES
+	//	($1, $2, $3, $4, $5, 0, 0, $6)
+	//RETURNING match_id`, m.Start, m.Season, m.Status, awayID, homeID, m.AwayScore, m.HomeScore, rinkID).Scan(&id)
+	//if err != nil {
+	//	log.Println(err.Error())
+	//}
+	//return err
+	return nil
+}
+
+func (ms *MatchService) Match(id int) (*snc.Match, error) {
+	m := snc.Match{}
+	err := ms.DB.QueryRow(`
+	SELECT
+		m.match_id,
+		m.start,
+		m.season,
+		m.status,
+		away.name,
+		home.name,
+		m.away_score,
+		m.home_score,
+		rink.name
+	FROM (matches AS m
+		INNER JOIN teams AS home
+			ON home.team_id = m.home_id
+		INNER JOIN teams AS away
+			ON away.team_id = m.away_id
+		INNER JOIN rinks AS rink
+			ON rink.rink_id = m.rink_id)
+	WHERE m.match_id = $1 AND m.deleted IS FALSE`, id).
+		Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+func (ms *MatchService) Matches() ([]*snc.Match, error) {
+	rows, err := ms.DB.Query(`
+	SELECT
+		m.match_id,
+		m.start,
+		m.season,
+		m.status,
+		away.name,
+		home.name,
+		m.away_score,
+		m.home_score,
+		rink.name
+	FROM (matches AS m
+		INNER JOIN teams AS home
+			ON home.team_id = m.home_id
+		INNER JOIN teams AS away
+			ON away.team_id = m.away_id
+		INNER JOIN rinks AS rink
+			ON rink.rink_id = m.rink_id)
+	WHERE m.deleted IS FALSE
+	ORDER BY m.start DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	matches := make([]*snc.Match, 0)
+	for rows.Next() {
+		m := snc.Match{}
+		err := rows.Scan(&m.ID, &m.Start, &m.Season, &m.Status, &m.Away, &m.Home, &m.AwayScore, &m.HomeScore, &m.Rink)
+		// err here is the row.Scan(...) error. It shadows the err from outside the loop, and does not overwrite
+		if err != nil {
+			// probably the schema is wrong or the row is bad and so the database needs inspecting
+			// later on this might want to be changed to pass through and list the IDs of the bad rows
+			return nil, err
+		}
+		matches = append(matches, &m)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
+func (ms *MatchService) UpdateMatch(m *snc.Match) error {
+	// todo
+	return nil
+}
+
+func (ms *MatchService) DeleteMatch(id int) error {
+	// todo
+	return nil
+}
 
 
 //--------------------------------------------------------------------------------------------------------------------//

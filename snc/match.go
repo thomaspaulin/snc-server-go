@@ -38,7 +38,7 @@ type Match struct {
 
 type MatchService interface {
 	CreateMatch(m *Match) error
-	Match(id int) error
+	Match(id int) (*Match, error)
 	Matches() ([]*Match, error)
 	UpdateMatch(m *Match) error
 	DeleteMatch(id int) error

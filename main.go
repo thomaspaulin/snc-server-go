@@ -7,7 +7,6 @@ import (
 	_ "github.com/lib/pq"
 	"strconv"
 	"github.com/thomaspaulin/snc-server-go/postgres"
-	"github.com/thomaspaulin/snc-server-go/snc"
 	"fmt"
 	"net/http"
 	"github.com/gin-gonic/gin"
@@ -22,15 +21,6 @@ func port() int {
 	return 4242
 }
 
-type Context struct {
-	DB 				*sql.DB
-
-	// TODO these are temporary
-	DivisionService snc.DivisionService
-	RinkService		snc.RinkService
-	TeamService 	snc.TeamService
-}
-
 var DB *sql.DB
 
 func setDBConnection(ctx *gin.Context) {
@@ -42,6 +32,9 @@ func initServices(DB *sql.DB) Services {
 
 	ds := &postgres.DivisionService{DB: DB}
 	s.DivisionService = ds
+
+	ms := &postgres.MatchService{DB: DB}
+	s.MatchService = ms
 
 	ts := &postgres.TeamService{DB: DB}
 	s.TeamService = ts
@@ -63,7 +56,7 @@ func APIEngine(s Services) *gin.Engine {
 		v1.GET("/", Index)
 		v1.GET("/hello", Hello)
 
-		//Get("/matches", (*Context).GetMatches).
+		v1.GET("/matches", GetMatches)
 		//Post("/matches", (*Context).CreateMatches).
 		//Get("/matches/:matchID", (*Context).GetSpecificMatches)
 		v1.GET("/teams", GetTeams)
