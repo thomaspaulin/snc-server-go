@@ -1,19 +1,4 @@
 # Road Map
-* Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
-    1. Teams
-        1. ~~Read~~
-        2. ~~Create~~
-        3. ~~Update~~
-    2. Divisions
-        1. ~~Read~~
-        2. ~~Create~~
-        3. ~~Update~~
-    3. Matches
-        1. Read
-    4. Rinks
-        1. ~~Read~~
-        2. ~~Create~~
-* Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
 * Look into https://github.com/apiaryio/dredd
 * Create DB queries for players
 * Create players endpoint
