@@ -14,6 +14,7 @@
         1. ~~Read~~
         2. ~~Create~~
 * Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
+* Look into https://github.com/apiaryio/dredd
 * Create DB queries for players
 * Create players endpoint
     1. Alter Team struct to include players. This will require:
