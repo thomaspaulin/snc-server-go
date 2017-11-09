@@ -14,9 +14,11 @@ type Team struct {
 	LogoURL		string	`json:"logoURL"`
 }
 
+// todo use copy rather than pointer
 type TeamService interface {
 	CreateTeam(t *Team) error
 	Team(id int) (*Team, error)
+	TeamCalled(name string) (*Team, error)
 	Teams() ([]*Team, error)
 	UpdateTeam(t *Team) error
 	DeleteTeam(id int) error

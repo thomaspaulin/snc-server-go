@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/thomaspaulin/snc-server-go/snc"
 	"log"
+	"strings"
 )
 
 
@@ -332,7 +333,7 @@ func (ts *TeamService) CreateTeam(t *snc.Team) error {
 		(name, division_id, logo_url)
 	VALUES
   		($1, $2, $3)
-	RETURNING team_id`, t.Name, 0, t.LogoURL).Scan(&id)
+	RETURNING team_id`, strings.ToLower(t.Name), 0, t.LogoURL).Scan(&id)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -400,6 +401,26 @@ func (ts *TeamService) Teams() ([]*snc.Team, error) {
 	return teams, nil
 }
 
+func (ts *TeamService) TeamCalled(name string) (*snc.Team, error) {
+	t := snc.Team{Name: name}
+	err := ts.DB.QueryRow(`
+	SELECT
+  		teams.team_id  AS  team_id,
+  		divisions.name AS  div_name,
+  		teams.logo_url
+	FROM (teams
+		JOIN divisions ON teams.division_id = divisions.division_id
+	 )
+	 WHERE teams.name = $1 AND teams.deleted IS FALSE`, strings.ToLower(name)).Scan(&t.ID, &t.Division, &t.LogoURL)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	return &t, nil
+}
+
 func (ts *TeamService) UpdateTeam(t *snc.Team) error {
 	id := 0
 	err := ts.DB.QueryRow(`
@@ -407,7 +428,7 @@ func (ts *TeamService) UpdateTeam(t *snc.Team) error {
 			name = $1
 		WHERE
 			team_id = $2 AND deleted IS FALSE
-		RETURNING team_id`, t.Name, t.ID).Scan(&id)
+		RETURNING team_id`, strings.ToLower(t.Name), t.ID).Scan(&id)
 	if err != nil {
 		log.Println(err.Error());
 	}

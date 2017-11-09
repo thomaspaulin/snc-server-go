@@ -121,17 +121,23 @@ func GetSpecificTeam(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
 	}
+	var t *snc.Team
 	teamID := c.Param("teamID")
 	if teamID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
 	} else if _, err := strconv.Atoi(teamID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
-	}
-	tID, err := strconv.Atoi(teamID)
-	t, err := s.TeamService.Team(int(tID))
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		t, err = s.TeamService.TeamCalled(teamID)
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	} else {
+		tID, _ := strconv.Atoi(teamID)
+		t, err = s.TeamService.Team(int(tID))
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 	c.JSON(http.StatusOK, t)
 }
