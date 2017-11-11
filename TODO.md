@@ -1,5 +1,5 @@
 # Road Map
-* Look into https://github.com/apiaryio/dredd
+* Trial using gorm. Will it make it faster to get everything down?
 * Create DB queries for players
 * Create players endpoint
     1. Alter Team struct to include players. This will require:
@@ -22,3 +22,5 @@
 * Return 404s instead of no rows in result from Scan()
 * Think about how deleting an item in each table woul affect others in order to get the cascading right
 * Transactions for the database
+* Make the server responses actually useful instead of "null" and similar
+* Look into https://github.com/apiaryio/dredd for testing the API on the server
