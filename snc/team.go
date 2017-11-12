@@ -2,13 +2,14 @@ package snc
 
 import (
 	"errors"
+	"github.com/jinzhu/gorm"
 )
 
 //--------------------------------------------------------------------------------------------------------------------//
 // Team
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
-	ID			uint32	`json:"id"`
+	gorm.Model
 	Name		string	`json:"name"`
 	Division	string	`json:"division"`
 	LogoURL		string	`json:"logoURL"`
@@ -28,7 +29,7 @@ var ErrMultipleTeams = errors.New("snc: expected only one team but got multiple"
 // Division
 //--------------------------------------------------------------------------------------------------------------------//
 type Division struct {
-	ID			uint32	`json:"id"`
+	gorm.Model
 	Name		string	`json:"name"`
 }
 
@@ -44,7 +45,7 @@ type DivisionService interface {
 // Player
 //--------------------------------------------------------------------------------------------------------------------//
 type Player struct {
-	ID			uint32		`json:"id"`
+	gorm.Model
 	Number		uint		`json:"number"`
 	Name		string		`json:"name"`
 	Teams		[]string	`json:"teams"`
@@ -55,7 +56,7 @@ type Player struct {
 // Goalie
 //--------------------------------------------------------------------------------------------------------------------//
 type Goalie struct {
-	ID			uint32		`json:"id"`
+	gorm.Model
 	Number		uint		`json:"number"`
 	Name		string		`json:"name"`
 	Teams		[]string	`json:"teams"`

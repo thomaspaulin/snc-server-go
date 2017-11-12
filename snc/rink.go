@@ -1,12 +1,14 @@
 package snc
 
+import "github.com/jinzhu/gorm"
+
 const (
 	Avondale = "Avondale"
 	Botany = "Botany"
 )
 
 type Rink struct {
-	ID		uint32	`json:"id"`
+	gorm.Model
 	Name	string	`json:"name"`
 }
 

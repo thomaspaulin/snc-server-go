@@ -2,6 +2,7 @@ package snc
 
 import (
 	"time"
+	"github.com/jinzhu/gorm"
 )
 
 // todo handle the errors properly
@@ -23,7 +24,7 @@ const (
 // Match
 //-----------------------------------------------//
 type Match struct {
-	ID			uint32		`json:"id"`
+	gorm.Model
 	// Datetime of the match start in UTC
 	Start 		time.Time	`json:"start"`
 	Season		int			`json:"season"`
@@ -34,6 +35,8 @@ type Match struct {
 	AwayScore	uint32		`json:"awayScore"`
 	HomeScore	uint32		`json:"homeScore"`
 	Rink		string		`json:"rink"`
+	//Goals		[]*Goal		`json:"goals"`
+	//Penalties	[]*Penalty	`json:"penalties"`
 }
 
 type MatchService interface {
@@ -44,32 +47,11 @@ type MatchService interface {
 	DeleteMatch(id int) error
 }
 
-// TODO: unify the match and match summary classes? In a way they are the same thing
-//-----------------------------------------------//
-// Match Summary
-//-----------------------------------------------//
-type MatchSummary struct {
-	MatchID		uint32		`json:"matchId"`
-	// Datetime of the match start in UTC
-	Start		time.Time	`json:"start"`
-	Away		string		`json:"away"`
-	Home		string		`json:"home"`
-	AwayScore	int			`json:"awayScore"`
-	HomeScore	int			`json:"homeScore"`
-	Rink		string		`json:"rink"`
-	Goals		[]*Goal		`json:"goals"`
-	Penalties	[]*Penalty	`json:"penalties"`
-	// todo:
-	//  - shots (per team, per period)
-	//  - power plays (per team, successful and total)
-	//  - players and goalies indexed by team
-}
-
 //-----------------------------------------------//
 // Goal
 //-----------------------------------------------//
 type Goal struct {
-	ID			uint32		`json:"id"`
+	gorm.Model
 	GoalType	string		`json:"goalType"`
 	// ID of the team that scored
 	Team		string		`json:"team"`
@@ -85,7 +67,7 @@ type Goal struct {
 // Penalty
 //-----------------------------------------------//
 type Penalty struct {
-	ID			uint32		`json:"id"`
+	gorm.Model
 	Team		string		`json:"team"`
 	Period		uint		`json:"period"`
 	// Seconds left in the period when the penalty was incurred
