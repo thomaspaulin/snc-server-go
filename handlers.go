@@ -49,7 +49,7 @@ func GetMatches(c *gin.Context) {
 	}
 
 	if len(matches) == 0 {
-		matches = make([]*snc.Match, 0)
+		c.AbortWithStatus(http.StatusNoContent)
 	}
 	c.JSON(http.StatusOK, matches)
 }
@@ -111,7 +111,7 @@ func GetTeams(c *gin.Context) {
 	}
 
 	if len(teams) == 0 {
-		teams = make([]*snc.Team, 0)
+		c.AbortWithStatus(http.StatusNoContent)
 	}
 	c.JSON(http.StatusOK, teams)
 }
@@ -172,7 +172,7 @@ func GetRinks(c *gin.Context) {
 	}
 
 	if len(rinks) == 0 {
-		rinks = make([]*snc.Rink, 0)
+		c.AbortWithStatus(http.StatusNoContent)
 	}
 	c.JSON(http.StatusOK, rinks)
 }
@@ -256,7 +256,7 @@ func GetDivisions(c *gin.Context) {
 	}
 
 	if len(divisions) == 0 {
-		divisions = make([]*snc.Division, 0)
+		c.AbortWithStatus(http.StatusNoContent)
 	}
 	c.JSON(http.StatusOK, divisions)
 }
