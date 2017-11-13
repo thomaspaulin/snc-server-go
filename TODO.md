@@ -24,3 +24,4 @@
 * Transactions for the database
 * Make the server responses actually useful instead of "null" and similar
 * Look into https://github.com/apiaryio/dredd for testing the API on the server
+* HAL links. Initial request gets some of the metadata then the next one follows the _links property to get things for example the examples at https://api.football-data.org/documentation
