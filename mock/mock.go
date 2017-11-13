@@ -108,6 +108,9 @@ type TeamService struct {
 	TeamsFn				func() ([]*snc.Team, error)
 	TeamsInvoked		bool
 
+	TeamNameFn			func(name string) (*snc.Team, error)
+	TeamNameInvoked		bool
+
 	UpdateFn			func(t *snc.Team) error
 	UpdateInvoked		bool
 
@@ -128,6 +131,11 @@ func (ts *TeamService) Team(id int) (*snc.Team, error) {
 func (ts *TeamService) Teams() ([]*snc.Team, error) {
 	ts.TeamsInvoked = true
 	return ts.TeamsFn()
+}
+
+func (ts *TeamService) TeamName(name string) (*snc.Team, error) {
+	ts.TeamNameInvoked = true
+	return ts.TeamNameFn(name)
 }
 
 func (ts *TeamService) UpdateTeam(t *snc.Team) error {
