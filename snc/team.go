@@ -15,7 +15,7 @@ type Team struct {
 	Name		string	`json:"name"`
 	Division	string	`json:"division"`
 	LogoURL		string	`json:"logoURL"`
-	Players		[]Player`json:"players"`
+	Players		[]Player`json:"players,omitempty"`
 }
 
 var ErrMultipleTeams = errors.New("snc: expected only one team but got multiple")

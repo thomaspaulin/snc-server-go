@@ -6,23 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"errors"
 )
-
-type Services struct {
-	DivisionService		snc.DivisionService
-	MatchService		snc.MatchService
-	TeamService			snc.TeamService
-	RinkService			snc.RinkService
-}
-
-func services(c *gin.Context) (*Services, error) {
-	s, exists := c.Get("services")
-	if !exists {
-		return nil, errors.New("handlers: services struct doesn't exist in the context but it should have been set on init")
-	}
-	return s.(*Services), nil
-}
 
 func Index(c *gin.Context) {
 	Hello(c)
@@ -37,12 +21,8 @@ func Hello(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Matches
 //------------------------------------------------------------------------------------------------//
-func GetMatches(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
-	matches, err := s.MatchService.Matches()
+func GetMatchesHandler(c *gin.Context) {
+	matches, err := snc.FetchMatches(DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -99,12 +79,8 @@ func GetMatches(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Teams
 //------------------------------------------------------------------------------------------------//
-func GetTeams(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
-	teams, err := s.TeamService.Teams()
+func GetTeamsHandler(c *gin.Context) {
+	teams, err := snc.FetchTeams(DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -116,24 +92,20 @@ func GetTeams(c *gin.Context) {
 	c.JSON(http.StatusOK, teams)
 }
 
-func GetSpecificTeam(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
-	var t *snc.Team
+func GetSpecificTeamHandler(c *gin.Context) {
+	var t snc.Team
 	teamID := c.Param("teamID")
 	if teamID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
 	} else if _, err := strconv.Atoi(teamID); err != nil {
-		t, err = s.TeamService.TeamCalled(teamID)
+		t, err = snc.TeamCalled(teamID, DB)
 		if err != nil {
 			log.Println(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	} else {
 		tID, _ := strconv.Atoi(teamID)
-		t, err = s.TeamService.Team(int(tID))
+		t, err = snc.FetchTeam(uint(tID), DB)
 		if err != nil {
 			log.Println(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -145,27 +117,19 @@ func GetSpecificTeam(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Rinks
 //------------------------------------------------------------------------------------------------//
-func CreateRink(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func CreateRinkHandler(c *gin.Context) {
 	r := snc.Rink{}
-	if err = c.BindJSON(&r); err != nil {
+	if err := c.BindJSON(&r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		if err = s.RinkService.CreateRink(&r); err != nil {
+		if err = snc.CreateRink(r, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
 }
 
-func GetRinks(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
-	rinks, err := s.RinkService.Rinks()
+func GetRinksHandler(c *gin.Context) {
+	rinks, err := snc.FetchRinks(DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -177,11 +141,7 @@ func GetRinks(c *gin.Context) {
 	c.JSON(http.StatusOK, rinks)
 }
 
-func GetSpecificRink(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func GetSpecificRinkHandler(c *gin.Context) {
 	rinkID := c.Param("rinkID")
 	if rinkID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
@@ -189,7 +149,7 @@ func GetSpecificRink(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
 	rID, err := strconv.Atoi(rinkID)
-	r, err := s.RinkService.Rink(int(rID))
+	r, err := snc.FetchRink(uint(rID), DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -197,11 +157,7 @@ func GetSpecificRink(c *gin.Context) {
 	c.JSON(http.StatusOK, r)
 }
 
-func UpdateRink(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func UpdateRinkHandler(c *gin.Context) {
 	rinkID := c.Param("rinkID")
 	if rinkID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
@@ -220,7 +176,7 @@ func UpdateRink(c *gin.Context) {
 			// ID wasn't provided so assume the one in the URL
 			r.ID = uint(rID)
 		}
-		if err := s.RinkService.UpdateRink(&r); err != nil {
+		if err := snc.UpdateRink(r, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
@@ -229,27 +185,19 @@ func UpdateRink(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Divisions
 //------------------------------------------------------------------------------------------------//
-func CreateDivision(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func CreateDivisionHandler(c *gin.Context) {
 	d := snc.Division{}
-	if err = c.BindJSON(&d); err != nil {
+	if err := c.BindJSON(&d); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		if err = s.DivisionService.CreateDivision(&d); err != nil {
+		if err = snc.CreateDivision(d, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
 }
 
-func GetDivisions(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
-	divisions, err := s.DivisionService.Divisions()
+func GetDivisionsHandler(c *gin.Context) {
+	divisions, err := snc.FetchDivisions(DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -261,11 +209,7 @@ func GetDivisions(c *gin.Context) {
 	c.JSON(http.StatusOK, divisions)
 }
 
-func GetSpecificDivision(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func GetSpecificDivisionHandler(c *gin.Context) {
 	divisionID := c.Param("divisionID")
 	if divisionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
@@ -273,7 +217,7 @@ func GetSpecificDivision(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
 	dID, err := strconv.Atoi(divisionID)
-	d, err := s.DivisionService.Division(int(dID))
+	d, err := snc.FetchDivision(uint(dID), DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -281,11 +225,7 @@ func GetSpecificDivision(c *gin.Context) {
 	c.JSON(http.StatusOK, d)
 }
 
-func UpdateDivision(c *gin.Context) {
-	s, err := services(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "The server couldn't process the request"})
-	}
+func UpdateDivisionHandler(c *gin.Context) {
 	divisionID := c.Param("divisionID")
 	if divisionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
@@ -304,7 +244,7 @@ func UpdateDivision(c *gin.Context) {
 			// ID wasn't provided so assume the one in the URL
 			d.ID = uint(dID)
 		}
-		if err := s.DivisionService.UpdateDivision(&d); err != nil {
+		if err := snc.UpdateDivision(d, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
