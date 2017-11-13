@@ -29,7 +29,7 @@ func (ds *DivisionService) CreateDivision(d *snc.Division) error {
 }
 
 func (ds *DivisionService) Division(id int) (*snc.Division, error) {
-	d := snc.Division{ID: uint32(id)}
+	d := snc.Division{ID: uint(id)}
 	err := ds.DB.QueryRow(`
 	SELECT
 		division_id, name
@@ -237,7 +237,7 @@ func (rs *RinkService) CreateRink(r *snc.Rink) error {
 }
 
 func (rs *RinkService) Rink(id int) (*snc.Rink, error) {
-	r := snc.Rink{ID: uint32(id)}
+	r := snc.Rink{ID: uint(id)}
 	err := rs.DB.QueryRow(`
 	SELECT
 		rink_id, name
@@ -341,7 +341,7 @@ func (ts *TeamService) CreateTeam(t *snc.Team) error {
 }
 
 func (ts *TeamService) Team(id int) (*snc.Team, error) {
-	t := snc.Team{ID: uint32(id)}
+	t := snc.Team{ID: uint(id)}
 	err := ts.DB.QueryRow(`
 	SELECT
   		teams.name     AS  team_name,

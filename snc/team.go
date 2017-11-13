@@ -8,7 +8,7 @@ import (
 // Team
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
-	ID			uint32	`json:"id"`
+	ID			uint	`json:"id"`
 	Name		string	`json:"name"`
 	Division	string	`json:"division"`
 	LogoURL		string	`json:"logoURL"`
@@ -30,7 +30,7 @@ var ErrMultipleTeams = errors.New("snc: expected only one team but got multiple"
 // Division
 //--------------------------------------------------------------------------------------------------------------------//
 type Division struct {
-	ID			uint32	`json:"id"`
+	ID			uint	`json:"id"`
 	Name		string	`json:"name"`
 }
 
@@ -43,25 +43,12 @@ type DivisionService interface {
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
-// Player
+// Player (Goalies included)
 //--------------------------------------------------------------------------------------------------------------------//
 type Player struct {
-	ID			uint32		`json:"id"`
+	ID			uint		`json:"id"`
 	Number		uint		`json:"number"`
 	Name		string		`json:"name"`
 	Teams		[]string	`json:"teams"`
 	Position	string		`json:"position"`
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-// Goalie
-//--------------------------------------------------------------------------------------------------------------------//
-type Goalie struct {
-	ID			uint32		`json:"id"`
-	Number		uint		`json:"number"`
-	Name		string		`json:"name"`
-	Teams		[]string	`json:"teams"`
-	Shots		uint		`json:"shots"`
-	Saves		uint		`json:"saves"`
-	Mins		uint		`json:"mins"`
 }

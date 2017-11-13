@@ -6,7 +6,7 @@ const (
 )
 
 type Rink struct {
-	ID		uint32	`json:"id"`
+	ID		uint	`json:"id"`
 	Name	string	`json:"name"`
 }
 

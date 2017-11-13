@@ -82,7 +82,7 @@ func GetMatches(c *gin.Context) {
 //		log.Println(err.Error())
 //		http.Error(w, err.Error(), http.StatusBadRequest)
 //	}
-//	match, err := FetchMatch(ctx.DB, uint32(mID))
+//	match, err := FetchMatch(ctx.DB, uint(mID))
 //	if err != nil {
 //		log.Println(err.Error())
 //		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -213,12 +213,12 @@ func UpdateRink(c *gin.Context) {
 	if err = c.BindJSON(&r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		if r.ID != 0 && r.ID != uint32(rID) {
+		if r.ID != 0 && r.ID != uint(rID) {
 			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		} else if r.ID == 0 {
 			// ID wasn't provided so assume the one in the URL
-			r.ID = uint32(rID)
+			r.ID = uint(rID)
 		}
 		if err := s.RinkService.UpdateRink(&r); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -297,12 +297,12 @@ func UpdateDivision(c *gin.Context) {
 	if err = c.BindJSON(&d); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		if d.ID != 0 && d.ID != uint32(dID) {
+		if d.ID != 0 && d.ID != uint(dID) {
 			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		} else if d.ID == 0 {
 			// ID wasn't provided so assume the one in the URL
-			d.ID = uint32(dID)
+			d.ID = uint(dID)
 		}
 		if err := s.DivisionService.UpdateDivision(&d); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
