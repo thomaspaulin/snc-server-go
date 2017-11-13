@@ -10,10 +10,10 @@ import (
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
 	gorm.Model
-	Name     string   `json:"name"`
-	Division string   `json:"division"`
-	LogoURL  string   `json:"logoURL"`
-	Players  []Player `json:"players,omitempty"`
+	Name       string   `json:"name"`
+	DivisionID uint     `json:"divisionID"`
+	LogoURL    string   `json:"logoURL"`
+	Players    []Player `json:"players,omitempty" gorm:"ForeignKey:ID"`
 }
 
 func CreateTeam(t Team, DB gorm.DB) error {
@@ -93,7 +93,6 @@ type Player struct {
 	gorm.Model
 	JerseyNumber uint   `json:"jerseyNumber"`
 	Name         string `json:"name"`
-	//Teams		[]string	`json:"playsFor"`
 	Position	string		`json:"position"`
 }
 

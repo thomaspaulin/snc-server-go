@@ -21,60 +21,46 @@ func Hello(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Matches
 //------------------------------------------------------------------------------------------------//
-//func GetMatchesHandler(c *gin.Context) {
-//	matches, err := snc.FetchMatches(DB)
-//	if err != nil {
-//		log.Println(err.Error())
-//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//	}
-//
-//	if len(matches) == 0 {
-//		c.AbortWithStatus(http.StatusNoContent)
-//	}
-//	c.JSON(http.StatusOK, matches)
-//}
+func CreateMatchHandler(c *gin.Context) {
+	m := snc.Match{}
+	if err := c.BindJSON(&m); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		log.Printf("%v\n", m)
+		if err = snc.CreateMatch(m, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
 
-//func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
-//	decoder := json.NewDecoder(req.Body)
-//	matches := make([]*Match, 0)
-//	err := decoder.Decode(&matches)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	defer req.Body.Close()
-//	for _, m := range matches {
-//		_, err := m.Save(ctx.DB)
-//		if err != nil {
-//			log.Println(err.Error())
-//			http.Error(w, err.Error(), http.StatusInternalServerError)
-//		}
-//	}
-//}
-//
-//func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
-//	matchID := req.PathParams["matchID"]
-//	if matchID == "" {
-//		http.Error(w, "Missing match ID", http.StatusBadRequest)
-//	}
-//	mID, err := strconv.ParseInt(matchID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusBadRequest)
-//	}
-//	match, err := FetchMatch(ctx.DB, uint(mID))
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	err = encoder.Encode(match)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//}
+func GetMatchesHandler(c *gin.Context) {
+	matches, err := snc.FetchMatches(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(matches) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, matches)
+}
+
+func GetSpecificMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	if matchID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(matchID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	mID, err := strconv.Atoi(matchID)
+	m, err := snc.FetchMatch(uint(mID), DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, m)
+}
 
 //------------------------------------------------------------------------------------------------//
 // Teams

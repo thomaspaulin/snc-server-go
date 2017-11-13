@@ -32,3 +32,5 @@
 * Relations
 * Indexes
 * Don't show "deletedAt"
+* Cascading queries such as delete
+* Fix get all not returning everything
