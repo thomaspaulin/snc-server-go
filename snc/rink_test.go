@@ -1,14 +1,14 @@
 package snc
 
 import (
-	"testing"
-	"os"
-	"fmt"
-	"path/filepath"
-	"runtime"
-	"reflect"
-	"log"
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"testing"
 )
 
 var TestDB *sql.DB
@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 	// do the setup
 	var retCode int
 	// run the tests
-	retCode	= m.Run()
+	retCode = m.Run()
 	// do the tear down
 
 	os.Exit(retCode)
@@ -34,7 +34,6 @@ func TestFetchAllRinks(t *testing.T) {
 	//equals(t, exp, rinks)
 	log.Println("Fetch All")
 }
-
 
 // helper functions thanks to https://github.com/benbjohnson/testing
 // assert fails the test if the condition is false.

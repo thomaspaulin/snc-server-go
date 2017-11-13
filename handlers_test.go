@@ -1,14 +1,14 @@
 package main
 
 import (
-	"os"
-	"testing"
-	"net/http/httptest"
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"github.com/thomaspaulin/snc-server-go/mock"
 	"github.com/thomaspaulin/snc-server-go/snc"
 	"net/http"
-	"github.com/stretchr/testify/assert"
-	"encoding/json"
+	"net/http/httptest"
+	"os"
+	"testing"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	// do the setup
 	var retCode int
 	// run the tests
-	retCode	= m.Run()
+	retCode = m.Run()
 	// do the tear down
 
 	os.Exit(retCode)
@@ -32,16 +32,16 @@ func TestGetMatches(t *testing.T) {
 
 	matches := make([]*snc.Match, 2)
 	matches[0] = &snc.Match{
-		ID: 1,
-		Start: time.Date(2017, 4, 15, 4, 30, 0, 0, time.UTC),
-		Division: "C",
-		Season: 2017,
-		Status: snc.Over,
-		Away: "Bears",
-		Home: "Tigers",
+		ID:        1,
+		Start:     time.Date(2017, 4, 15, 4, 30, 0, 0, time.UTC),
+		Division:  "C",
+		Season:    2017,
+		Status:    snc.Over,
+		Away:      "Bears",
+		Home:      "Tigers",
 		AwayScore: 3,
 		HomeScore: 1,
-		Rink: "Botany"}
+		Rink:      "Botany"}
 
 	s := Services{}
 	ms := mock.MatchService{}
@@ -103,7 +103,7 @@ func TestGetSpecificRink(t *testing.T) {
 	s := Services{}
 	ts := mock.TeamService{}
 	ts.TeamFn = func(id int) (*snc.Team, error) {
-		assert.Equal(t, id, 1);
+		assert.Equal(t, id, 1)
 		return &team, nil
 	}
 
@@ -142,4 +142,3 @@ func TestGetSpecificRink(t *testing.T) {
 //	assert.True(t, ts.CreateInvoked)
 //	assert.Equal(t, 200, w.Code)
 //}
-

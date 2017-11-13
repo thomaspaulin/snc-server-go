@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/thomaspaulin/snc-server-go/snc"
 	"github.com/gin-gonic/gin"
+	"github.com/thomaspaulin/snc-server-go/snc"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,18 +21,18 @@ func Hello(c *gin.Context) {
 //------------------------------------------------------------------------------------------------//
 // Matches
 //------------------------------------------------------------------------------------------------//
-func GetMatchesHandler(c *gin.Context) {
-	matches, err := snc.FetchMatches(DB)
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	if len(matches) == 0 {
-		c.AbortWithStatus(http.StatusNoContent)
-	}
-	c.JSON(http.StatusOK, matches)
-}
+//func GetMatchesHandler(c *gin.Context) {
+//	matches, err := snc.FetchMatches(DB)
+//	if err != nil {
+//		log.Println(err.Error())
+//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//	}
+//
+//	if len(matches) == 0 {
+//		c.AbortWithStatus(http.StatusNoContent)
+//	}
+//	c.JSON(http.StatusOK, matches)
+//}
 
 //func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
 //	decoder := json.NewDecoder(req.Body)
@@ -245,6 +245,74 @@ func UpdateDivisionHandler(c *gin.Context) {
 			d.ID = uint(dID)
 		}
 		if err := snc.UpdateDivision(d, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------//
+// Players
+//------------------------------------------------------------------------------------------------//
+func CreatePlayerHandler(c *gin.Context) {
+	p := snc.Player{}
+	if err := c.BindJSON(&p); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreatePlayer(p, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func GetPlayersHandler(c *gin.Context) {
+	players, err := snc.FetchPlayers(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(players) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, players)
+}
+
+func GetSpecificPlayerHandler(c *gin.Context) {
+	playerID := c.Param("playerID")
+	if playerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	pID, err := strconv.Atoi(playerID)
+	d, err := snc.FetchPlayer(uint(pID), DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, d)
+}
+
+func UpdatePlayerHandler(c *gin.Context) {
+	playerID := c.Param("playerID")
+	if playerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	pID, err := strconv.Atoi(playerID)
+	p := snc.Player{}
+	if err = c.BindJSON(&p); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if p.ID != 0 && p.ID != uint(pID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if p.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			p.ID = uint(pID)
+		}
+		if err := snc.UpdatePlayer(p, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
