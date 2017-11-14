@@ -1,13 +1,6 @@
 # Road Map
-* Trial using gorm. Will it make it faster to get everything down?
-* Create DB queries for players
-* Create players endpoint
-    1. Alter Team struct to include players. This will require:
-        1. Update the join table
-        2. Logic to update the player struct to include who they play for
-    2. Update queries
-        1. Create
-        2. Read
+* Don't let gorm return a zero struct, instead return 404
+* Fix update (PUT) not working
 * Handle CORS
 * Create endpoint goals (inc assists)
     a. Read
@@ -16,6 +9,7 @@
 * Add goals and penalties to Match struct
     a. Alter struct
     b. Update queries
+* Fix the error from parsing the path param being ignored
 * Add player match stats endpoint
 * Add goalie match stats endpoint
 * Create columns/tables to log creation, modification, deletion (date)

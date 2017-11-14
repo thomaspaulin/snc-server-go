@@ -16,7 +16,7 @@ type Team struct {
 	Players    []Player `json:"players,omitempty" gorm:"ForeignKey:ID"`
 }
 
-func CreateTeam(t Team, DB gorm.DB) error {
+func CreateTeam(t Team, DB *gorm.DB) error {
 	DB.Create(&t)
 	return DB.Error
 }
