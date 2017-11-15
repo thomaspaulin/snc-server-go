@@ -1,7 +1,4 @@
 # Road Map
-* Don't let gorm return a zero struct, instead return 404
-* Fix update (PUT) not working
-* Handle CORS
 * Create endpoint goals (inc assists)
     a. Read
 * Create endpoint penalties
@@ -12,19 +9,12 @@
 * Fix the error from parsing the path param being ignored
 * Add player match stats endpoint
 * Add goalie match stats endpoint
-* Create columns/tables to log creation, modification, deletion (date)
-* Return 404s instead of no rows in result from Scan()
-* Think about how deleting an item in each table woul affect others in order to get the cascading right
 * Transactions for the database
-* Make the server responses actually useful instead of "null" and similar
 * Look into https://github.com/apiaryio/dredd for testing the API on the server
+* Handle CORS
 * HAL links. Initial request gets some of the metadata then the next one follows the _links property to get things for example the examples at https://api.football-data.org/documentation
 
 
-
 # GORM todos
-* Relations
+* Relations (foreign keys)
 * Indexes
-* Don't show "deletedAt"
-* Cascading queries such as delete
-* Fix get all not returning everything
