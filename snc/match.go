@@ -35,6 +35,7 @@ type Match struct {
 	AwayScore  uint      `json:"awayScore"`
 	HomeScore  uint      `json:"homeScore"`
 	RinkID     uint      `json:"rinkID"`
+	//Goals	   []MatchGoal `json:"goals,omitempty"`
 }
 
 func CreateMatch(m Match, DB *gorm.DB) error {
@@ -60,26 +61,61 @@ func UpdateMatch(m Match, DB *gorm.DB) error {
 }
 
 func DeleteMatch(id uint, DB *gorm.DB) error {
-	DB.Where("ID = ? AND deleted_at IS NULL").Delete(id)
+	var m Match
+	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&m)
 	return DB.Error
 }
 
-////-----------------------------------------------//
-//// Goal
-////-----------------------------------------------//
-//type Goal struct {
-//	ID       uint   `json:"id"`
-//	GoalType string `json:"goalType"`
-//	// ID of the team that scored
-//	Team   string `json:"team"`
-//	Period uint   `json:"period"`
-//	// Seconds left in the period when the goal was scored
-//	Time uint `json:"time"`
-//	// ID of the scoring player
-//	Scorer  string   `json:"scorer"`
-//	Assists []string `json:"assists"`
+//-----------------------------------------------//
+// Goal
+//-----------------------------------------------//
+type Goal struct {
+	gorm.Model
+	GoalType string `json:"goalType"`
+	// ID of the team that scored
+	TeamID   uint `json:"teamID"`
+	Period uint   `json:"period"`
+	// Seconds left in the period when the goal was scored
+	Time uint `json:"time"`
+	// ID of the scoring player
+	Scorer  uint   `json:"scoredBy"`
+	//AssistedBy []Player `json:"assistedBy" gorm:"ForeignKey:ID"`
+}
+
+func CreateGoal(g Goal, DB *gorm.DB) error {
+	DB.Create(&g)
+	return DB.Error
+}
+
+func FetchGoal(id uint, DB *gorm.DB) (Goal, error) {
+	g := Goal{}
+	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&g)
+	return g, DB.Error
+}
+
+func FetchGoals(DB *gorm.DB) ([]Goal, error) {
+	m := make([]Goal, 0)
+	DB.Where("deleted_at IS NULL").Find(&m)
+	return m, DB.Error
+}
+
+func UpdateGoal(g Goal, DB *gorm.DB) error {
+	DB.Where("deleted_at IS NULL").Save(&g)
+	return DB.Error
+}
+
+func DeleteGoal(id uint, DB *gorm.DB) error {
+	var g Goal
+	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&g)
+	return DB.Error
+}
+
+//type MatchGoal struct {
+//	gorm.Model
+//	MatchID uint	`gorm:"index, primary_key"`
+//	GoalID uint		`gorm:"index, primary_key"`
 //}
-//
+
 ////-----------------------------------------------//
 //// Penalty
 ////-----------------------------------------------//

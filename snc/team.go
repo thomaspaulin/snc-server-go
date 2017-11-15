@@ -39,12 +39,12 @@ func TeamCalled(name string, DB *gorm.DB) (Team, error) {
 	return team, DB.Error
 }
 
-func UpdateTeam(t *Team, DB *gorm.DB) error {
+func UpdateTeam(t Team, DB *gorm.DB) error {
 	DB.Where("ID = ? AND deleted_at IS NULL", t.ID).Save(&t)
 	return DB.Error
 }
 
-func DeleteTeam(id int, DB *gorm.DB) error {
+func DeleteTeam(id uint, DB *gorm.DB) error {
 	var team Team
 	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&team)
 	return DB.Error
