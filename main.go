@@ -1,16 +1,15 @@
 package main
 
 import (
-	"log"
-	"os"
-	"database/sql"
-	_ "github.com/lib/pq"
-	"strconv"
-	"github.com/thomaspaulin/snc-server-go/postgres"
-	"github.com/thomaspaulin/snc-server-go/snc"
-	"github.com/gocraft/web"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
+	"github.com/thomaspaulin/snc-server-go/snc"
+	"log"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 func port() int {
@@ -22,82 +21,64 @@ func port() int {
 	return 4242
 }
 
-type Context struct {
-	DB 				*sql.DB
-
-	// TODO these are temporary
-	DivisionService snc.DivisionService
-	RinkService		snc.RinkService
-	TeamService 	snc.TeamService
-}
-
-var DB *sql.DB
-
-func (ctx *Context) getDBConnection(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	ctx.DB = DB
-	next(w, req)
-}
-
-func (ctx *Context) initServices(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-	ds := &postgres.DivisionService{DB: ctx.DB}
-	ctx.DivisionService = ds
-
-	ts := &postgres.TeamService{DB: ctx.DB}
-	ctx.TeamService = ts
-
-	rs := &postgres.RinkService{DB: ctx.DB}
-	ctx.RinkService = rs
-
-	next(w, req)
-}
+var DB *gorm.DB
 
 func main() {
 	username := os.Getenv("SNC_USER")
 	password := os.Getenv("SNC_PW")
 	host := os.Getenv("SNC_HOST")
-	DBName := os.Getenv("SNC_DB")
+	DBName := "snc_gorm" //os.Getenv("SNC_DB")
 
 	var err error
-	DB, err = sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName))
+	DB, err = gorm.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName))
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Here's what I'm using to connect to the database:\n" +
+	log.Printf("Here's what I'm using to connect to the database:\n"+
 		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
-	err = DB.Ping();
-	if err != nil {
-		panic(err)
-	}
 	defer DB.Close()
 
+	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Player{}, &snc.Match{})//, &snc.Goal{}, &snc.Penalty{})
 	// todo find a way to do it such that the services aren't in the context
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
+	r := gin.Default()
 
-	r := web.New(Context{}).
-			Middleware(web.LoggerMiddleware).
-			Middleware(web.ShowErrorsMiddleware).
-			Middleware((*Context).getDBConnection).
-			Middleware((*Context).initServices).
-			Get("/", Index).
-			Get("/hello", Hello).
-			//Get("/matches", (*Context).GetMatches).
-			//Post("/matches", (*Context).CreateMatches).
-			//Get("/matches/:matchID", (*Context).GetSpecificMatches).
+	v1 := r.Group("/api/v0")
+	{
+		v1.GET("/", Index)
+		v1.GET("/hello", Hello)
 
-			Get("/teams", (*Context).GetTeams).
-			Get("/teams/:teamID", (*Context).GetSpecificTeam).
+		v1.GET("/matches", GetMatchesHandler)
+		v1.GET("/matches/:matchID", GetSpecificMatchHandler)
+		v1.POST("/matches", CreateMatchHandler)
+		//v1.PUT()
+		//v1.DELETE()
 
-			Get("/rinks", (*Context).GetRinks).
-			Get("/rinks/:rinkID", (*Context).GetSpecificRink).
-			Post("/rinks", (*Context).CreateRink).
-			Put("/rinks/:rinkID", (*Context).UpdateRink).
+		v1.GET("/teams", GetTeamsHandler)
+		v1.GET("/teams/:teamID", GetSpecificTeamHandler)
+		v1.POST("/teams", CreateTeamHandler)
+		v1.PUT("/teams/:teamID", UpdateTeamHandler)
+		v1.DELETE("/teams/:teamID", DeleteTeamHandler)
 
-			Get("/divisions", (*Context).GetDivisions).
-			Get("/divisions/:divisionID", (*Context).GetSpecificDivision).
-			Post("divisions", (*Context).CreateDivision).
-			Put("divisions/:divisionID", (*Context).UpdateDivision)
+		v1.GET("/rinks", GetRinksHandler)
+		v1.GET("/rinks/:rinkID", GetSpecificRinkHandler)
+		v1.POST("/rinks", CreateRinkHandler)
+		v1.PUT("/rinks/:rinkID", UpdateRinkHandler)
+		v1.DELETE("/rinks/:rinkID", DeleteDivisionHandler)
 
+		v1.GET("/divisions", GetDivisionsHandler)
+		v1.GET("/divisions/:divisionID", GetSpecificDivisionHandler)
+		v1.POST("/divisions", CreateDivisionHandler)
+		v1.PUT("/divisions/:divisionID", UpdateDivisionHandler)
+		v1.DELETE("/divisions/:divisionID", DeleteDivisionHandler)
+
+		v1.GET("/players", GetPlayersHandler)
+		v1.GET("/players/:playerID", GetSpecificPlayerHandler)
+		v1.POST("/players", CreatePlayerHandler)
+		v1.PUT("/players/:playerID", UpdatePlayerHandler)
+		v1.DELETE("/players/:playerID", DeletePlayerHandler)
+	}
 	log.Printf("main: starting up server on port %d\n", port())
 	log.Fatal(http.ListenAndServe("localhost:4242", r))
 }

@@ -1,27 +1,7 @@
 # Road Map
-* Create some endpoints. No join tables yet except teams and divisions, and matches and rinks.
-    1. Teams
-        1. ~~Read~~
-        2. Create
-        3. Update
-    2. Divisions
-        1. ~~Read~~
-        2. ~~Create~~
-        3. ~~Update~~
-    3. Matches
-        1. Read
-    4. Rinks
-        1. ~~Read~~
-        2. ~~Create~~
-* Begin writing tests in go's built-in testing framework, then maybe, gingko (or cucumber/gherkin), and Frisby later
-* Create DB queries for players
-* Create players endpoint
-    1. Alter Team struct to include players. This will require:
-        1. Update the join table
-        2. Logic to update the player struct to include who they play for
-    2. Update queries
-        1. Create
-        2. Read
+* Don't let gorm return a zero struct, instead return 404
+* Fix update (PUT) not working
+* Handle CORS
 * Create endpoint goals (inc assists)
     a. Read
 * Create endpoint penalties
@@ -29,10 +9,22 @@
 * Add goals and penalties to Match struct
     a. Alter struct
     b. Update queries
+* Fix the error from parsing the path param being ignored
 * Add player match stats endpoint
 * Add goalie match stats endpoint
-* Create columns/tables to log creation and modified
+* Create columns/tables to log creation, modification, deletion (date)
 * Return 404s instead of no rows in result from Scan()
 * Think about how deleting an item in each table woul affect others in order to get the cascading right
-* Consider moving to gin-gonic/gin because it has had commits within the past few months until gocraft/web which last had a commit 2 years ago
 * Transactions for the database
+* Make the server responses actually useful instead of "null" and similar
+* Look into https://github.com/apiaryio/dredd for testing the API on the server
+* HAL links. Initial request gets some of the metadata then the next one follows the _links property to get things for example the examples at https://api.football-data.org/documentation
+
+
+
+# GORM todos
+* Relations
+* Indexes
+* Don't show "deletedAt"
+* Cascading queries such as delete
+* Fix get all not returning everything

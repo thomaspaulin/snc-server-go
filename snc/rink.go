@@ -1,19 +1,43 @@
 package snc
 
+import (
+	"github.com/jinzhu/gorm"
+)
+
 const (
 	Avondale = "Avondale"
-	Botany = "Botany"
+	Botany   = "Botany"
 )
 
 type Rink struct {
-	ID		uint32	`json:"id"`
-	Name	string	`json:"name"`
+	gorm.Model
+	Name string `json:"name"`
 }
 
-type RinkService interface {
-	CreateRink(r *Rink) error
-	Rink(id int) (*Rink, error)
-	Rinks() ([]*Rink, error)
-	UpdateRink(r *Rink) error
-	DeleteRink(id int) error
+func CreateRink(r Rink, DB *gorm.DB) error {
+	DB.Create(&r)
+	return DB.Error
+}
+
+func FetchRink(id uint, DB *gorm.DB) (Rink, error) {
+	var r Rink
+	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&r)
+	return r, DB.Error
+}
+
+func FetchRinks(DB *gorm.DB) ([]Rink, error) {
+	r := make([]Rink, 0)
+	DB.Where("deleted_at IS NULL").Find(&r)
+	return r, DB.Error
+}
+
+func UpdateRink(r Rink, DB *gorm.DB) error {
+	DB.Where("ID = ? AND deleted_at IS NULL", r.ID).Save(&r)
+	return DB.Error
+}
+
+func DeleteRink(id int, DB *gorm.DB) error {
+	var r Rink
+	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&r)
+	return DB.Error
 }

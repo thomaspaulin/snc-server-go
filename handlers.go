@@ -1,21 +1,19 @@
 package main
 
 import (
-	"net/http"
-	"io"
-	"encoding/json"
-	"strconv"
-	"github.com/gocraft/web"
-	"log"
+	"github.com/gin-gonic/gin"
 	"github.com/thomaspaulin/snc-server-go/snc"
+	"log"
+	"net/http"
+	"strconv"
 )
 
-func Index(w web.ResponseWriter, req *web.Request) {
-	Hello(w, req)
+func Index(c *gin.Context) {
+	Hello(c)
 }
 
-func Hello(w web.ResponseWriter, req *web.Request) {
-	io.WriteString(w, "Hello, world!\n")
+func Hello(c *gin.Context) {
+	c.String(200, "Hello, %s!\n", "world")
 }
 
 // todo
@@ -23,313 +21,409 @@ func Hello(w web.ResponseWriter, req *web.Request) {
 //------------------------------------------------------------------------------------------------//
 // Matches
 //------------------------------------------------------------------------------------------------//
-//func (ctx *Context) GetMatches(w web.ResponseWriter, req *web.Request) {
-//	matches, err := FetchMatches(ctx.DB)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	encodeErr := encoder.Encode(matches)
-//	if encodeErr != nil {
-//		log.Println(err.Error())
-//		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-//	}
-//	// The JSON encoder seems to write the OK header so we don't need to do it manually
-//}
-//
-//func (ctx *Context) CreateMatches(w web.ResponseWriter, req *web.Request) {
-//	decoder := json.NewDecoder(req.Body)
-//	matches := make([]*Match, 0)
-//	err := decoder.Decode(&matches)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	defer req.Body.Close()
-//	for _, m := range matches {
-//		_, err := m.Save(ctx.DB)
-//		if err != nil {
-//			log.Println(err.Error())
-//			http.Error(w, err.Error(), http.StatusInternalServerError)
-//		}
-//	}
-//}
-//
-//func (ctx *Context) GetSpecificMatches(w web.ResponseWriter, req *web.Request) {
-//	matchID := req.PathParams["matchID"]
-//	if matchID == "" {
-//		http.Error(w, "Missing match ID", http.StatusBadRequest)
-//	}
-//	mID, err := strconv.ParseInt(matchID, 10, 32)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusBadRequest)
-//	}
-//	match, err := FetchMatch(ctx.DB, uint32(mID))
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//	w.Header().Set("Content-Type", "application/json")
-//	encoder := json.NewEncoder(w)
-//	err = encoder.Encode(match)
-//	if err != nil {
-//		log.Println(err.Error())
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
-//	}
-//}
+func CreateMatchHandler(c *gin.Context) {
+	m := snc.Match{}
+	if err := c.BindJSON(&m); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		log.Printf("%v\n", m)
+		if err = snc.CreateMatch(m, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func GetMatchesHandler(c *gin.Context) {
+	matches, err := snc.FetchMatches(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(matches) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, matches)
+}
+
+func GetSpecificMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	if matchID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(matchID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	mID, err := strconv.Atoi(matchID)
+	m, err := snc.FetchMatch(uint(mID), DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	if m.ID != 0 {
+		c.JSON(http.StatusOK, m)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
 
 //------------------------------------------------------------------------------------------------//
 // Teams
 //------------------------------------------------------------------------------------------------//
-func (ctx *Context) GetTeams(w web.ResponseWriter, req *web.Request) {
-	teams, err := ctx.TeamService.Teams()
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	encodeErr := encoder.Encode(teams)
-	if encodeErr != nil {
-		log.Println(err.Error())
-		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-		return
+func CreateTeamHandler(c *gin.Context) {
+	t := snc.Team{}
+	if err := c.BindJSON(&t); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreateTeam(t, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
 
-func (ctx *Context) GetSpecificTeam(w web.ResponseWriter, req *web.Request) {
-	teamID := req.PathParams["teamID"]
+func GetTeamsHandler(c *gin.Context) {
+	teams, err := snc.FetchTeams(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(teams) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, teams)
+}
+
+func GetSpecificTeamHandler(c *gin.Context) {
+	var t snc.Team
+	teamID := c.Param("teamID")
 	if teamID == "" {
-		http.Error(w, "Missing team ID", http.StatusBadRequest)
-		return
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
+	} else if _, err := strconv.Atoi(teamID); err != nil {
+		t, err = snc.TeamCalled(teamID, DB)
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	} else {
+		tID, _ := strconv.Atoi(teamID)
+		t, err = snc.FetchTeam(uint(tID), DB)
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
-	tID, err := strconv.ParseInt(teamID, 10, 32)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if t.ID != 0 {
+		c.JSON(http.StatusOK, t)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
 	}
-	team, err := ctx.TeamService.Team(int(tID))
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+}
+
+func UpdateTeamHandler(c *gin.Context) {
+	teamID := c.Param("teamID")
+	if teamID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
+	} else if _, err := strconv.Atoi(teamID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(team)
+	tID, err := strconv.Atoi(teamID)
+	t := snc.Team{}
+	if err = c.BindJSON(&t); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if t.ID != 0 && t.ID != uint(tID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if t.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			t.ID = uint(tID)
+		}
+		if err := snc.UpdateTeam(&t, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeleteTeamHandler(c *gin.Context) {
+	teamID := c.Param("teamID")
+	if teamID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
+	} else if _, err := strconv.Atoi(teamID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	tID, err := strconv.Atoi(teamID)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteTeam(tID, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
 
 //------------------------------------------------------------------------------------------------//
 // Rinks
 //------------------------------------------------------------------------------------------------//
-func (ctx *Context) CreateRink(w web.ResponseWriter, req *web.Request) {
-	decoder := json.NewDecoder(req.Body)
-	defer req.Body.Close()
+func CreateRinkHandler(c *gin.Context) {
 	r := snc.Rink{}
-	err := decoder.Decode(&r)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = ctx.RinkService.CreateRink(&r)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.BindJSON(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreateRink(r, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
 
-func (ctx *Context) GetRinks(w web.ResponseWriter, req *web.Request) {
-	rinks, err := ctx.RinkService.Rinks()
+func GetRinksHandler(c *gin.Context) {
+	rinks, err := snc.FetchRinks(DB)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	encodeErr := encoder.Encode(rinks)
-	if encodeErr != nil {
-		log.Println(err.Error())
-		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-		return
+
+	if len(rinks) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
 	}
+	c.JSON(http.StatusOK, rinks)
 }
 
-func (ctx *Context) GetSpecificRink(w web.ResponseWriter, req *web.Request) {
-	teamID := req.PathParams["rinkID"]
-	if teamID == "" {
-		http.Error(w, "Missing rink ID", http.StatusBadRequest)
-	}
-	rID, err := strconv.ParseInt(teamID, 10, 32)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	rink, err := ctx.RinkService.Rink(int(rID))
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(rink)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (ctx *Context) UpdateRink(w web.ResponseWriter, req *web.Request) {
-	rinkID := req.PathParams["rinkID"]
+func GetSpecificRinkHandler(c *gin.Context) {
+	rinkID := c.Param("rinkID")
 	if rinkID == "" {
-		http.Error(w, "Missing rink ID", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(rinkID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
-	rID, err := strconv.ParseInt(rinkID, 10, 32)
+	rID, err := strconv.Atoi(rinkID)
+	r, err := snc.FetchRink(uint(rID), DB)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	decoder := json.NewDecoder(req.Body)
-	defer req.Body.Close()
+	if r.ID != 0 {
+		c.JSON(http.StatusOK, r)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
+func UpdateRinkHandler(c *gin.Context) {
+	rinkID := c.Param("rinkID")
+	if rinkID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(rinkID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	rID, err := strconv.Atoi(rinkID)
 	r := snc.Rink{}
-	err = decoder.Decode(&r)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if err = c.BindJSON(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if r.ID != 0 && r.ID != uint(rID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if r.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			r.ID = uint(rID)
+		}
+		if err := snc.UpdateRink(r, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
-	if r.ID != 0 && r.ID != uint32(rID) {
-		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided.
-				They must be both, or you must omit the ID in the JSON and that in the path will be used`
-		log.Println(msg)
-		http.Error(w, msg, http.StatusBadRequest)
-		return
-	} else if r.ID == 0 {
-		// ID wasn't provided so assume the one in the URL
-		r.ID = uint32(rID)
+}
+
+func DeleteRinkHandler(c *gin.Context) {
+	rinkID := c.Param("rinkID")
+	if rinkID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(rinkID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
-	// else case is the ID and path param ID match so proceed
-	err = ctx.RinkService.UpdateRink(&r)
+	rID, err := strconv.Atoi(rinkID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteRink(rID, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
 
 //------------------------------------------------------------------------------------------------//
 // Divisions
 //------------------------------------------------------------------------------------------------//
-func (ctx *Context) CreateDivision(w web.ResponseWriter, req *web.Request) {
-	decoder := json.NewDecoder(req.Body)
-	defer req.Body.Close()
+func CreateDivisionHandler(c *gin.Context) {
 	d := snc.Division{}
-	err := decoder.Decode(&d)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = ctx.DivisionService.CreateDivision(&d)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.BindJSON(&d); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreateDivision(d, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
 
-func (ctx *Context) GetDivisions(w web.ResponseWriter, req *web.Request) {
-	divs, err := ctx.DivisionService.Divisions()
+func GetDivisionsHandler(c *gin.Context) {
+	divisions, err := snc.FetchDivisions(DB)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	encodeErr := encoder.Encode(divs)
-	if encodeErr != nil {
-		log.Println(encodeErr.Error())
-		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-		return
+
+	if len(divisions) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
 	}
+	c.JSON(http.StatusOK, divisions)
 }
 
-func (ctx *Context) GetSpecificDivision(w web.ResponseWriter, req *web.Request) {
-	divisionID := req.PathParams["divisionID"]
+func GetSpecificDivisionHandler(c *gin.Context) {
+	divisionID := c.Param("divisionID")
 	if divisionID == "" {
-		http.Error(w, "Missing division ID", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(divisionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
-	dID, err := strconv.ParseInt(divisionID, 10, 32)
+	dID, err := strconv.Atoi(divisionID)
+	d, err := snc.FetchDivision(uint(dID), DB)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	div, err := ctx.DivisionService.Division(int(dID))
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(div)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if d.ID != 0 {
+		c.JSON(http.StatusOK, d)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
 	}
 }
 
-func (ctx *Context) UpdateDivision(w web.ResponseWriter, req *web.Request) {
-	divisionID := req.PathParams["divisionID"]
+func UpdateDivisionHandler(c *gin.Context) {
+	divisionID := c.Param("divisionID")
 	if divisionID == "" {
-		http.Error(w, "Missing division ID", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(divisionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
-	dID, err := strconv.ParseInt(divisionID, 10, 32)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	decoder := json.NewDecoder(req.Body)
-	defer req.Body.Close()
+	dID, err := strconv.Atoi(divisionID)
 	d := snc.Division{}
-	err = decoder.Decode(&d)
+	if err = c.BindJSON(&d); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if d.ID != 0 && d.ID != uint(dID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if d.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			d.ID = uint(dID)
+		}
+		if err := snc.UpdateDivision(d, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeleteDivisionHandler(c *gin.Context) {
+	divisionID := c.Param("divisionID")
+	if divisionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(divisionID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	dID, err := strconv.Atoi(divisionID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteDivision(dID, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------//
+// Players
+//------------------------------------------------------------------------------------------------//
+func CreatePlayerHandler(c *gin.Context) {
+	p := snc.Player{}
+	if err := c.BindJSON(&p); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreatePlayer(p, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func GetPlayersHandler(c *gin.Context) {
+	players, err := snc.FetchPlayers(DB)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	if d.ID != 0 && d.ID != uint32(dID) {
-		msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
-		log.Println(msg)
-		http.Error(w, msg, http.StatusBadRequest)
-		return
-	} else if d.ID == 0 {
-		// ID wasn't provided so assume the one in the URL
-		d.ID = uint32(dID)
+
+	if len(players) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
 	}
-	// else case is the ID and path param ID match so proceed
-	err = ctx.DivisionService.UpdateDivision(&d)
+	c.JSON(http.StatusOK, players)
+}
+
+func GetSpecificPlayerHandler(c *gin.Context) {
+	playerID := c.Param("playerID")
+	if playerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	pID, err := strconv.Atoi(playerID)
+	p, err := snc.FetchPlayer(uint(pID), DB)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	if p.ID != 0 {
+		c.JSON(http.StatusOK, p)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
+func UpdatePlayerHandler(c *gin.Context) {
+	playerID := c.Param("playerID")
+	if playerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	pID, err := strconv.Atoi(playerID)
+	p := snc.Player{}
+	if err = c.BindJSON(&p); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if p.ID != 0 && p.ID != uint(pID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if p.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			p.ID = uint(pID)
+		}
+		if err := snc.UpdatePlayer(p, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeletePlayerHandler(c *gin.Context) {
+	playerID := c.Param("playerID")
+	if playerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	pID, err := strconv.Atoi(playerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeletePlayer(pID, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 }
