@@ -66,6 +66,138 @@ func GetSpecificMatchHandler(c *gin.Context) {
 	}
 }
 
+func UpdateMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	if matchID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing match ID"})
+	} else if _, err := strconv.Atoi(matchID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	tID, err := strconv.Atoi(matchID)
+	m := snc.Match{}
+	if err = c.BindJSON(&m); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if m.ID != 0 && m.ID != uint(tID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if m.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			m.ID = uint(tID)
+		}
+		if err := snc.UpdateMatch(m, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeleteMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	if matchID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing match ID"})
+	} else if _, err := strconv.Atoi(matchID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	mID, err := strconv.Atoi(matchID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteMatch(uint(mID), DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------//
+// Goals
+//------------------------------------------------------------------------------------------------//
+func CreateGoalHandler(c *gin.Context) {
+	g := snc.Goal{}
+	if err := c.BindJSON(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		log.Printf("%v\n", g)
+		if err = snc.CreateGoal(g, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func GetGoalsHandler(c *gin.Context) {
+	goals, err := snc.FetchGoals(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(goals) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, goals)
+}
+
+func GetSpecificGoalHandler(c *gin.Context) {
+	goalID := c.Param("goalID")
+	if goalID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing rink ID"})
+	} else if _, err := strconv.Atoi(goalID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	gID, err := strconv.Atoi(goalID)
+	g, err := snc.FetchGoal(uint(gID), DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	if g.ID != 0 {
+		c.JSON(http.StatusOK, g)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
+func UpdateGoalHandler(c *gin.Context) {
+	goalID := c.Param("goalID")
+	if goalID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing goal ID"})
+	} else if _, err := strconv.Atoi(goalID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	tID, err := strconv.Atoi(goalID)
+	g := snc.Goal{}
+	if err = c.BindJSON(&g); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if g.ID != 0 && g.ID != uint(tID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if g.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			g.ID = uint(tID)
+		}
+		if err := snc.UpdateGoal(g, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeleteGoalHandler(c *gin.Context) {
+	goalID := c.Param("goalID")
+	if goalID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing goal ID"})
+	} else if _, err := strconv.Atoi(goalID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	gID, err := strconv.Atoi(goalID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteGoal(uint(gID), DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
 //------------------------------------------------------------------------------------------------//
 // Teams
 //------------------------------------------------------------------------------------------------//
@@ -138,7 +270,7 @@ func UpdateTeamHandler(c *gin.Context) {
 			// ID wasn't provided so assume the one in the URL
 			t.ID = uint(tID)
 		}
-		if err := snc.UpdateTeam(&t, DB); err != nil {
+		if err := snc.UpdateTeam(t, DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
@@ -155,7 +287,7 @@ func DeleteTeamHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else {
-		if err := snc.DeleteTeam(tID, DB); err != nil {
+		if err := snc.DeleteTeam(uint(tID), DB); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
