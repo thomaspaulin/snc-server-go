@@ -59,7 +59,11 @@ func GetSpecificMatchHandler(c *gin.Context) {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusOK, m)
+	if m.ID != 0 {
+		c.JSON(http.StatusOK, m)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 //------------------------------------------------------------------------------------------------//
@@ -108,7 +112,11 @@ func GetSpecificTeamHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 	}
-	c.JSON(http.StatusOK, t)
+	if t.ID != 0 {
+		c.JSON(http.StatusOK, t)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 func UpdateTeamHandler(c *gin.Context) {
@@ -193,7 +201,11 @@ func GetSpecificRinkHandler(c *gin.Context) {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusOK, r)
+	if r.ID != 0 {
+		c.JSON(http.StatusOK, r)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 func UpdateRinkHandler(c *gin.Context) {
@@ -278,7 +290,11 @@ func GetSpecificDivisionHandler(c *gin.Context) {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusOK, d)
+	if d.ID != 0 {
+		c.JSON(http.StatusOK, d)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 func UpdateDivisionHandler(c *gin.Context) {
@@ -358,12 +374,16 @@ func GetSpecificPlayerHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
 	}
 	pID, err := strconv.Atoi(playerID)
-	d, err := snc.FetchPlayer(uint(pID), DB)
+	p, err := snc.FetchPlayer(uint(pID), DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusOK, d)
+	if p.ID != 0 {
+		c.JSON(http.StatusOK, p)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
 }
 
 func UpdatePlayerHandler(c *gin.Context) {
