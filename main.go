@@ -13,12 +13,20 @@ import (
 )
 
 func port() int {
-	p := os.Getenv("SNC_SERV_PORT")
-	i, err := strconv.ParseInt(p, 10, 32)
-	if err == nil {
-		return int(i)
+	p, present := os.LookupEnv("SNC_SERV_PORT")
+	if !present {
+		log.Println("Environment variable SNC_SERV_PORT not present, looking for PORT")
+		p, present = os.LookupEnv("PORT")
+		if !present {
+			log.Println("Environment variable PORT not present, falling back to 4242")
+			return 4242
+		}
 	}
-	return 4242
+	i, err := strconv.ParseInt(p, 10, 32)
+	if err != nil {
+		return 4242
+	}
+	return int(i)
 }
 
 var DB *gorm.DB
@@ -38,7 +46,7 @@ func main() {
 		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
 	defer DB.Close()
 
-	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Player{}, &snc.Match{}, &snc.Goal{})//, &snc.Penalty{})
+	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
 	// todo find a way to do it such that the services aren't in the context
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
@@ -85,6 +93,7 @@ func main() {
 		v1.PUT("/players/:playerID", UpdatePlayerHandler)
 		v1.DELETE("/players/:playerID", DeletePlayerHandler)
 	}
-	log.Printf("main: starting up server on port %d\n", port())
-	log.Fatal(http.ListenAndServe("localhost:4242", r))
+	port := port()
+	log.Printf("main: starting up server on port %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
 }
