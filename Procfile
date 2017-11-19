@@ -1,0 +1,1 @@
+web: snc-server-go

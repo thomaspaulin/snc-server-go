@@ -9,14 +9,12 @@ import (
 )
 
 func Index(c *gin.Context) {
-	Hello(c)
+	c.Redirect(307, "/api/v0/")
 }
 
-func Hello(c *gin.Context) {
-	c.String(200, "Hello, %s!\n", "world")
+func APIIndex(c *gin.Context) {
+	c.String(200, "SNC API is a work in progress.")
 }
-
-// todo
 
 //------------------------------------------------------------------------------------------------//
 // Matches
