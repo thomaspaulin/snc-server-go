@@ -39,7 +39,7 @@ func databaseURL() string {
 		DBName := os.Getenv("SNC_DB")
 		URL = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName)
 	}
-	c := strings.Index(URL, ":")
+	c := strings.LastIndex(URL, ":")
 	a := strings.Index(URL, "@")
 	u := URL[0:c+1] + "********" + URL[a:len(URL)]
 	log.Printf("Here's what I'm using to connect to the database:\n%s", u)
