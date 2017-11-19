@@ -13,7 +13,7 @@ func Index(c *gin.Context) {
 }
 
 func APIIndex(c *gin.Context) {
-	c.String(200, "SNC API is a work in progres.")
+	c.String(200, "SNC API is a work in progress.")
 }
 
 //------------------------------------------------------------------------------------------------//
