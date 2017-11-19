@@ -22,7 +22,7 @@
 
 [metadata.heroku]
     root-package = "github.com/thomaspaulin/snc-server-go"
-    go-version = "1.9.2"
+    go-version = "go1.9.2"
     install = ["./..."]
 
 [[constraint]]
