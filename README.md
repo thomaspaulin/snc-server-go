@@ -4,3 +4,6 @@
 3. Run `dep ensure` from inside this repository to fetch the dependencies
 4. Run `go install`
 5. Run the produced executable
+
+# Accessing the API
+The SNC API is currently hosted on a [Heroku hobby plan](https://snc-api.herokuapp.com/).
