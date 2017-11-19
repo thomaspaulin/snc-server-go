@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func port() int {
@@ -29,21 +30,31 @@ func port() int {
 	return int(i)
 }
 
+func databaseURL() string {
+	URL, present := os.LookupEnv("DATABASE_URL")
+	if !present {
+		username := os.Getenv("SNC_USER")
+		password := os.Getenv("SNC_PW")
+		host := os.Getenv("SNC_HOST")
+		DBName := os.Getenv("SNC_DB")
+		URL = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName)
+	}
+	c := strings.Index(URL, ":")
+	a := strings.Index(URL, "@")
+	u := URL[0:c+1] + "********" + URL[a:len(URL)]
+	log.Printf("Here's what I'm using to connect to the database:\n%s", u)
+	return URL
+}
+
 var DB *gorm.DB
 
 func main() {
-	username := os.Getenv("SNC_USER")
-	password := os.Getenv("SNC_PW")
-	host := os.Getenv("SNC_HOST")
-	DBName := "snc_gorm" //os.Getenv("SNC_DB")
-
 	var err error
-	DB, err = gorm.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName))
+	DB, err = gorm.Open("postgres", databaseURL())
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Here's what I'm using to connect to the database:\n"+
-		"USER: %s\nHOST: %s\nDATABASE: %s", username, host, DBName)
+
 	defer DB.Close()
 
 	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
