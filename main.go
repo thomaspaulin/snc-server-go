@@ -66,10 +66,11 @@ func main() {
 	// todo use PATCH to update parts of an entity and
 	r := gin.Default()
 
+	r.GET("/", Index)
+
 	v1 := r.Group("/api/v0")
 	{
-		v1.GET("/", Index)
-		v1.GET("/hello", Hello)
+		v1.GET("/", APIIndex)
 
 		v1.GET("/matches", GetMatchesHandler)
 		v1.GET("/matches/:matchID", GetSpecificMatchHandler)
