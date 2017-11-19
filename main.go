@@ -25,6 +25,8 @@ func port() int {
 	}
 	i, err := strconv.ParseInt(p, 10, 32)
 	if err != nil {
+		log.Println("Failed to parse the port to an integer. Using 4242 instead. The error was:")
+		log.Println(err.Error())
 		return 4242
 	}
 	return int(i)
@@ -33,6 +35,7 @@ func port() int {
 func databaseURL() string {
 	URL, present := os.LookupEnv("DATABASE_URL")
 	if !present {
+		log.Println("Environment variable 'DATABASE_URL' was not present, using the 'SNC_' prefixed environment variables to create the database URL.")
 		username := os.Getenv("SNC_USER")
 		password := os.Getenv("SNC_PW")
 		host := os.Getenv("SNC_HOST")
