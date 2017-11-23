@@ -93,7 +93,7 @@ type Player struct {
 	gorm.Model
 	JerseyNumber uint   `json:"jerseyNumber"`
 	Name         string `json:"name"`
-	Position	string		`json:"position"`
+	Position     string `json:"position"`
 }
 
 func CreatePlayer(p Player, DB *gorm.DB) error {
