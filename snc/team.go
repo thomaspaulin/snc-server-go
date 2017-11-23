@@ -11,7 +11,8 @@ import (
 type Team struct {
 	gorm.Model
 	Name       string   `json:"name"`
-	DivisionID uint     `json:"divisionID"`
+	Division   Division `json:"division" gorm:"ForeignKey:DivisionID"`
+	DivisionID uint     `json:"-"`
 	LogoURL    string   `json:"logoURL"`
 	Players    []Player `json:"players,omitempty" gorm:"ForeignKey:ID"`
 }

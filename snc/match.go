@@ -76,13 +76,13 @@ func DeleteMatch(id uint, DB *gorm.DB) error {
 type Goal struct {
 	gorm.Model
 	GoalType string `json:"goalType"`
-	// ID of the team that scored
-	TeamID uint `json:"teamID"`
-	Period uint `json:"period"`
+	Team     Team   `json:"team" gorm:"ForeignKey:TeamID"`
+	TeamID   uint   `json:"-"`
+	Period   uint   `json:"period"`
 	// Seconds left in the period when the goal was scored
-	Time uint `json:"time"`
-	// ID of the scoring player
-	Scorer uint `json:"scoredBy"`
+	Time     uint   `json:"time"`
+	Scorer   Player `json:"scoredBy" gorm:"ForeignKey:ScorerID"`
+	ScorerID uint   `json:"-"`
 	//AssistedBy []Player `json:"assistedBy" gorm:"ForeignKey:ID"`
 }
 
