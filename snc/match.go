@@ -1,8 +1,8 @@
 package snc
 
 import (
-	"time"
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 // todo handle the errors properly
@@ -29,12 +29,16 @@ type Match struct {
 	Start      time.Time `json:"start"`
 	Season     int       `json:"season"`
 	Status     string    `json:"status"`
-	DivisionID uint      `json:"division"`
-	AwayID     uint      `json:"awayID"`
-	HomeID     uint      `json:"homeID"`
+	Division   Division  `json:"division" gorm:"ForeignKey:DivisionID"`
+	DivisionID uint      `json:"-"`
+	Away       Team      `json:"away" gorm:"ForeignKey:AwayID"`
+	Home       Team      `json:"home" gorm:"ForeignKey:HomeID"`
+	AwayID     uint      `json:"-"`
+	HomeID     uint      `json:"-"`
 	AwayScore  uint      `json:"awayScore"`
 	HomeScore  uint      `json:"homeScore"`
-	RinkID     uint      `json:"rinkID"`
+	Rink       Rink      `json:"rink" gorm:"ForeignKey:RinkID"`
+	RinkID     uint      `json:"-"`
 	//Goals	   []MatchGoal `json:"goals,omitempty"`
 }
 
@@ -72,13 +76,13 @@ func DeleteMatch(id uint, DB *gorm.DB) error {
 type Goal struct {
 	gorm.Model
 	GoalType string `json:"goalType"`
-	// ID of the team that scored
-	TeamID   uint `json:"teamID"`
-	Period uint   `json:"period"`
+	Team     Team   `json:"team" gorm:"ForeignKey:TeamID"`
+	TeamID   uint   `json:"-"`
+	Period   uint   `json:"period"`
 	// Seconds left in the period when the goal was scored
-	Time uint `json:"time"`
-	// ID of the scoring player
-	Scorer  uint   `json:"scoredBy"`
+	Time     uint   `json:"time"`
+	Scorer   Player `json:"scoredBy" gorm:"ForeignKey:ScorerID"`
+	ScorerID uint   `json:"-"`
 	//AssistedBy []Player `json:"assistedBy" gorm:"ForeignKey:ID"`
 }
 
