@@ -1,6 +1,7 @@
 package snc
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 )
 
@@ -11,10 +12,8 @@ import (
 type Team struct {
 	gorm.Model
 	Name       string   `json:"name"`
-	Division   Division `json:"division" gorm:"ForeignKey:DivisionID"`
+	Division   Division `json:"division"`
 	DivisionID uint     `json:"-"`
-	LogoURL    string   `json:"logoURL"`
-	Players    []Player `json:"players,omitempty" gorm:"ForeignKey:ID"`
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
@@ -23,20 +22,21 @@ func CreateTeam(t Team, DB *gorm.DB) error {
 }
 
 func FetchTeam(id uint, DB *gorm.DB) (Team, error) {
+	fmt.Println("Fetching team")
 	var team Team
-	DB.Where("deleted_at IS NULL").First(&team, id)
+	DB.Preload("Division").Where("deleted_at IS NULL").First(&team, id)
 	return team, DB.Error
 }
 
 func FetchTeams(DB *gorm.DB) ([]Team, error) {
 	teams := make([]Team, 0)
-	DB = DB.Where("deleted_at IS NULL").Find(&teams)
+	DB = DB.Preload("Division").Where("deleted_at IS NULL").Find(&teams)
 	return teams, DB.Error
 }
 
 func TeamCalled(name string, DB *gorm.DB) (Team, error) {
 	var team Team
-	DB.Where("name = ? AND deleted_at IS NULL", name).First(&team)
+	DB.Preload("Division").Where("name = ? AND deleted_at IS NULL", name).First(&team)
 	return team, DB.Error
 }
 

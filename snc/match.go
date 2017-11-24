@@ -49,13 +49,19 @@ func CreateMatch(m Match, DB *gorm.DB) error {
 
 func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	m := Match{}
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&m)
+	DB.Preload("Division").
+		Preload("Away").
+		Preload("Home").
+		Where("ID = ? AND deleted_at IS NULL", id).First(&m)
 	return m, DB.Error
 }
 
 func FetchMatches(DB *gorm.DB) ([]Match, error) {
 	m := make([]Match, 0)
-	DB.Where("deleted_at IS NULL").Find(&m)
+	DB.Preload("Division").
+		Preload("Away").
+		Preload("Home").
+		Preload("Rink").Where("deleted_at IS NULL").Find(&m)
 	return m, DB.Error
 }
 
@@ -76,12 +82,12 @@ func DeleteMatch(id uint, DB *gorm.DB) error {
 type Goal struct {
 	gorm.Model
 	GoalType string `json:"goalType"`
-	Team     Team   `json:"team" gorm:"ForeignKey:TeamID"`
+	Team     Team   `json:"team"`
 	TeamID   uint   `json:"-"`
 	Period   uint   `json:"period"`
 	// Seconds left in the period when the goal was scored
 	Time     uint   `json:"time"`
-	Scorer   Player `json:"scoredBy" gorm:"ForeignKey:ScorerID"`
+	Scorer   Player `json:"scoredBy"`
 	ScorerID uint   `json:"-"`
 	//AssistedBy []Player `json:"assistedBy" gorm:"ForeignKey:ID"`
 }
@@ -93,7 +99,10 @@ func CreateGoal(g Goal, DB *gorm.DB) error {
 
 func FetchGoal(id uint, DB *gorm.DB) (Goal, error) {
 	g := Goal{}
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&g)
+	DB.
+		Preload("Team").
+		Preload("Scorer").
+		Where("ID = ? AND deleted_at IS NULL", id).First(&g)
 	return g, DB.Error
 }
 
