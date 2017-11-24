@@ -60,7 +60,9 @@ func FetchMatches(DB *gorm.DB) ([]Match, error) {
 	m := make([]Match, 0)
 	DB.Preload("Division").
 		Preload("Away").
+		Preload("Away.Division").
 		Preload("Home").
+		Preload("Home.Division").
 		Preload("Rink").Where("deleted_at IS NULL").Find(&m)
 	return m, DB.Error
 }
