@@ -2,6 +2,7 @@ package snc
 
 import (
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 const (
@@ -10,8 +11,10 @@ const (
 )
 
 type Rink struct {
-	gorm.Model
-	Name string `json:"name" gorm:"not null;unique_index"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
+	Name      string     `json:"name" gorm:"not null;unique_index"`
 }
 
 func CreateRink(r Rink, DB *gorm.DB) error {
