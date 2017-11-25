@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// todo use deleted at fields
 //--------------------------------------------------------------------------------------------------------------------//
 // Team
 //--------------------------------------------------------------------------------------------------------------------//
@@ -15,11 +14,16 @@ type Team struct {
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	DeletedAt    *time.Time `json:"-" sql:"index"`
-	Name         string     `json:"name" gorm:"not null;unique_index"`
+	Name         string     `json:"name" gorm:"not null;unique_index;primary_key"`
 	DivisionName string     `json:"divisionName"`
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
+	team, _ := FetchTeamNamed(t.Name, DB)
+	if team.ID != 0 {
+		t.ID = team.ID
+		return UpdateTeam(t, DB)
+	}
 	res := DB.Create(&t)
 	return res.Error
 }
@@ -37,20 +41,20 @@ func FetchTeams(DB *gorm.DB) ([]Team, error) {
 	return teams, res.Error
 }
 
-func TeamCalled(name string, DB *gorm.DB) (Team, error) {
+func FetchTeamNamed(name string, DB *gorm.DB) (Team, error) {
 	var team Team
 	res := DB.Where("name = ? AND deleted_at IS NULL", name).First(&team)
 	return team, res.Error
 }
 
 func UpdateTeam(t Team, DB *gorm.DB) error {
-	res := DB.Where("ID = ? AND deleted_at IS NULL", t.ID).Save(&t)
+	res := DB.Where("id = ? AND deleted_at IS NULL", t.ID).Save(&t)
 	return res.Error
 }
 
 func DeleteTeam(id uint, DB *gorm.DB) error {
 	var team Team
-	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&team)
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&team)
 	return res.Error
 }
 
@@ -62,7 +66,7 @@ type Division struct {
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:"index"`
-	Name      string     `json:"name" gorm:"not null;unique_index"`
+	Name      string     `json:"name" gorm:"not null;unique_index;primary_key"`
 	Teams     []Team     `json:"teams" gorm:"ForeignKey:DivisionName;AssociationForeignKey:Name"`
 }
 
@@ -84,13 +88,13 @@ func FetchDivisions(DB *gorm.DB) ([]Division, error) {
 }
 
 func UpdateDivision(d Division, DB *gorm.DB) error {
-	res := DB.Where("ID = ? AND deleted_at IS NULL", d.ID).Save(&d)
+	res := DB.Where("id = ? AND deleted_at IS NULL", d.ID).Save(&d)
 	return res.Error
 }
 
 func DeleteDivision(id int, DB *gorm.DB) error {
 	var div Division
-	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&div)
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&div)
 	return res.Error
 }
 

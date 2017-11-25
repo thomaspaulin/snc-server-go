@@ -45,7 +45,61 @@ type Match struct {
 }
 
 func CreateMatch(m Match, DB *gorm.DB) error {
-	res := DB.Create(&m)
+	var awayID, homeID, rinkID uint
+	away, _ := FetchTeamNamed(m.Away.Name, DB)
+	awayID = away.ID
+	home, _ := FetchTeamNamed(m.Home.Name, DB)
+	homeID = home.ID
+	rink, _ := FetchRinkNamed(m.Rink.Name, DB)
+	rinkID = rink.ID
+
+	// For some reason IDs aren't being fetched so put this hack in place
+	var res *gorm.DB
+	if awayID != 0 && homeID != 0 && rinkID != 0 {
+		var match Match
+		res = DB.Where("start = ? AND away_id = ? AND home_id = ?", m.Start, awayID, homeID).
+			Find(&match)
+		if match.ID != 0 {
+			m.ID = match.ID
+			if m.AwayID == 0 {
+				m.AwayID = awayID
+				m.Away.ID = awayID
+			}
+			if m.HomeID == 0 {
+				m.HomeID = homeID
+				m.Home.ID = homeID
+			}
+			if m.RinkID == 0 {
+				m.RinkID = rinkID
+				m.Rink.ID = rinkID
+			}
+			// found match in DB
+			res = DB.Save(&m)
+		} else {
+			// didn't find match but did find the teams
+			m.AwayID = awayID
+			m.Away.ID = awayID
+			m.HomeID = homeID
+			m.Home.ID = homeID
+			m.RinkID = rinkID
+			m.Rink.ID = rinkID
+			res = DB.Create(&m)
+		}
+	} else {
+		if m.AwayID == 0 {
+			m.AwayID = awayID
+			m.Away.ID = awayID
+		}
+		if m.HomeID == 0 {
+			m.HomeID = homeID
+			m.Home.ID = homeID
+		}
+		if m.RinkID == 0 {
+			m.RinkID = rinkID
+			m.Rink.ID = rinkID
+		}
+		res = DB.Create(&m)
+	}
 	return res.Error
 }
 
@@ -53,16 +107,15 @@ func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	m := Match{}
 	res := DB.Preload("Away").
 		Preload("Home").
-		Where("ID = ? AND deleted_at IS NULL", id).First(&m)
+		Preload("Rink").
+		Where("id = ? AND deleted_at IS NULL", id).First(&m)
 	return m, res.Error
 }
 
 func FetchMatches(DB *gorm.DB) ([]Match, error) {
 	m := make([]Match, 0)
 	res := DB.Preload("Away").
-		Preload("Away.Division").
 		Preload("Home").
-		Preload("Home.Division").
 		Preload("Rink").Where("deleted_at IS NULL").Find(&m)
 	return m, res.Error
 }
@@ -74,7 +127,7 @@ func UpdateMatch(m Match, DB *gorm.DB) error {
 
 func DeleteMatch(id uint, DB *gorm.DB) error {
 	var m Match
-	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&m)
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&m)
 	return res.Error
 }
 
@@ -103,7 +156,7 @@ func FetchGoal(id uint, DB *gorm.DB) (Goal, error) {
 	g := Goal{}
 	res := DB.Preload("Team").
 		Preload("Scorer").
-		Where("ID = ? AND deleted_at IS NULL", id).First(&g)
+		Where("id = ? AND deleted_at IS NULL", id).First(&g)
 	return g, res.Error
 }
 
@@ -120,7 +173,7 @@ func UpdateGoal(g Goal, DB *gorm.DB) error {
 
 func DeleteGoal(id uint, DB *gorm.DB) error {
 	var g Goal
-	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&g)
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&g)
 	return res.Error
 }
 
