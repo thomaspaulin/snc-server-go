@@ -11,7 +11,7 @@ const (
 
 type Rink struct {
 	gorm.Model
-	Name string `json:"name"`
+	Name string `json:"name" gorm:"primary_key"`
 }
 
 func CreateRink(r Rink, DB *gorm.DB) error {

@@ -26,18 +26,18 @@ const (
 type Match struct {
 	gorm.Model
 	// Datetime of the match start in UTC
-	Start      time.Time `json:"start"`
+	Start      time.Time `json:"start" gorm:"not null;unique_index:idx_start_away_home"`
 	Season     int       `json:"season"`
 	Status     string    `json:"status"`
-	Division   Division  `json:"division" gorm:"ForeignKey:DivisionID"`
+	Division   Division  `json:"division"`
 	DivisionID uint      `json:"-"`
-	Away       Team      `json:"away" gorm:"ForeignKey:AwayID"`
-	Home       Team      `json:"home" gorm:"ForeignKey:HomeID"`
+	Away       Team      `json:"away" gorm:"not null;unique_index:idx_start_away_home"`
+	Home       Team      `json:"home" gorm:"not null;unique_index:idx_start_away_home"`
 	AwayID     uint      `json:"-"`
 	HomeID     uint      `json:"-"`
 	AwayScore  uint      `json:"awayScore"`
 	HomeScore  uint      `json:"homeScore"`
-	Rink       Rink      `json:"rink" gorm:"ForeignKey:RinkID"`
+	Rink       Rink      `json:"rink" gorm:"not null"`
 	RinkID     uint      `json:"-"`
 	//Goals	   []MatchGoal `json:"goals,omitempty"`
 }
