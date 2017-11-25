@@ -19,29 +19,39 @@ type Rink struct {
 }
 
 func CreateRink(r Rink, DB *gorm.DB) error {
-	DB.Create(&r)
-	return DB.Error
+	rink, _ := FetchRinkNamed(r.Name, DB)
+	if rink.ID != 0 {
+		return UpdateRink(r, DB)
+	}
+	res := DB.Create(&r)
+	return res.Error
 }
 
 func FetchRink(id uint, DB *gorm.DB) (Rink, error) {
 	var r Rink
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&r)
-	return r, DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).First(&r)
+	return r, res.Error
+}
+
+func FetchRinkNamed(name string, DB *gorm.DB) (Rink, error) {
+	var r Rink
+	res := DB.Where("Name = ? AND deleted_at IS NULL", name).First(&r)
+	return r, res.Error
 }
 
 func FetchRinks(DB *gorm.DB) ([]Rink, error) {
 	r := make([]Rink, 0)
-	DB.Where("deleted_at IS NULL").Find(&r)
-	return r, DB.Error
+	res := DB.Where("deleted_at IS NULL").Find(&r)
+	return r, res.Error
 }
 
 func UpdateRink(r Rink, DB *gorm.DB) error {
-	DB.Where("ID = ? AND deleted_at IS NULL", r.ID).Save(&r)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", r.ID).Save(&r)
+	return res.Error
 }
 
 func DeleteRink(id int, DB *gorm.DB) error {
 	var r Rink
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&r)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&r)
+	return res.Error
 }

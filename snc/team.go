@@ -20,38 +20,38 @@ type Team struct {
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
-	DB.Create(&t)
-	return DB.Error
+	res := DB.Create(&t)
+	return res.Error
 }
 
 func FetchTeam(id uint, DB *gorm.DB) (Team, error) {
 	fmt.Println("Fetching team")
 	var team Team
-	DB.Where("deleted_at IS NULL").First(&team, id)
-	return team, DB.Error
+	res := DB.Where("deleted_at IS NULL").First(&team, id)
+	return team, res.Error
 }
 
 func FetchTeams(DB *gorm.DB) ([]Team, error) {
 	teams := make([]Team, 0)
-	DB = DB.Where("deleted_at IS NULL").Find(&teams)
-	return teams, DB.Error
+	res := DB.Where("deleted_at IS NULL").Find(&teams)
+	return teams, res.Error
 }
 
 func TeamCalled(name string, DB *gorm.DB) (Team, error) {
 	var team Team
-	DB.Where("name = ? AND deleted_at IS NULL", name).First(&team)
-	return team, DB.Error
+	res := DB.Where("name = ? AND deleted_at IS NULL", name).First(&team)
+	return team, res.Error
 }
 
 func UpdateTeam(t Team, DB *gorm.DB) error {
-	DB.Where("ID = ? AND deleted_at IS NULL", t.ID).Save(&t)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", t.ID).Save(&t)
+	return res.Error
 }
 
 func DeleteTeam(id uint, DB *gorm.DB) error {
 	var team Team
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&team)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&team)
+	return res.Error
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -67,31 +67,31 @@ type Division struct {
 }
 
 func CreateDivision(d Division, DB *gorm.DB) error {
-	DB.Create(&d)
-	return DB.Error
+	res := DB.Create(&d)
+	return res.Error
 }
 
 func FetchDivision(id uint, DB *gorm.DB) (Division, error) {
 	var d Division
-	DB.Preload("Teams").Where("ID = ? AND deleted_at IS NULL", id).First(&d)
-	return d, DB.Error
+	res := DB.Preload("Teams").Where("ID = ? AND deleted_at IS NULL", id).First(&d)
+	return d, res.Error
 }
 
 func FetchDivisions(DB *gorm.DB) ([]Division, error) {
 	d := make([]Division, 0)
-	DB.Preload("Teams").Where("deleted_at IS NULL").Find(&d)
-	return d, DB.Error
+	res := DB.Preload("Teams").Where("deleted_at IS NULL").Find(&d)
+	return d, res.Error
 }
 
 func UpdateDivision(d Division, DB *gorm.DB) error {
-	DB.Where("ID = ? AND deleted_at IS NULL", d.ID).Save(&d)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", d.ID).Save(&d)
+	return res.Error
 }
 
 func DeleteDivision(id int, DB *gorm.DB) error {
 	var div Division
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&div)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&div)
+	return res.Error
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -105,29 +105,29 @@ type Player struct {
 }
 
 func CreatePlayer(p Player, DB *gorm.DB) error {
-	DB.Create(&p)
-	return DB.Error
+	res := DB.Create(&p)
+	return res.Error
 }
 
 func FetchPlayer(id uint, DB *gorm.DB) (Player, error) {
 	var p Player
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&p)
-	return p, DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).First(&p)
+	return p, res.Error
 }
 
 func FetchPlayers(DB *gorm.DB) ([]Player, error) {
 	p := make([]Player, 0)
-	DB.Where("deleted_at IS NULL").Find(&p)
-	return p, DB.Error
+	res := DB.Where("deleted_at IS NULL").Find(&p)
+	return p, res.Error
 }
 
 func UpdatePlayer(p Player, DB *gorm.DB) error {
-	DB.Where("ID = ? AND deleted_at IS NULL", p.ID).Save(&p)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", p.ID).Save(&p)
+	return res.Error
 }
 
 func DeletePlayer(id int, DB *gorm.DB) error {
 	var p Player
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&p)
-	return DB.Error
+	res := DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&p)
+	return res.Error
 }

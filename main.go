@@ -39,7 +39,7 @@ func databaseURL() string {
 		username := os.Getenv("SNC_USER")
 		password := os.Getenv("SNC_PW")
 		host := os.Getenv("SNC_HOST")
-		DBName := os.Getenv("SNC_DB")
+		DBName := "snc_gorm" //os.Getenv("SNC_DB")
 		URL = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, host, DBName)
 	}
 	c := strings.LastIndex(URL, ":")
@@ -77,7 +77,7 @@ func main() {
 
 	defer DB.Close()
 
-	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
+	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Match{}) //&snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
 	// todo find a way to do it such that the services aren't in the context
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
