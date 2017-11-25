@@ -11,6 +11,7 @@ const (
 )
 
 type Rink struct {
+	ID        uint       `gorm:"primary_key"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:"index"`
