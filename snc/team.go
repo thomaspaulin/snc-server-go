@@ -11,7 +11,7 @@ import (
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
 	gorm.Model
-	Name       string   `json:"name" gorm:"primary_key"`
+	Name       string   `json:"name" gorm:"not null;unique_index"`
 	Division   Division `json:"division"`
 	DivisionID uint     `json:"-"`
 }
@@ -56,7 +56,7 @@ func DeleteTeam(id uint, DB *gorm.DB) error {
 //--------------------------------------------------------------------------------------------------------------------//
 type Division struct {
 	gorm.Model
-	Name string `json:"name" gorm:"primary_key"`
+	Name string `json:"name" gorm:"not null;unique_index"`
 }
 
 func CreateDivision(d Division, DB *gorm.DB) error {
