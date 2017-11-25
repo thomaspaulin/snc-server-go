@@ -29,19 +29,18 @@ type Match struct {
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:"index"`
 	// Datetime of the match start in UTC
-	Start      time.Time `json:"start" gorm:"not null;unique_index:idx_start_away_home"`
-	Season     int       `json:"season"`
-	Status     string    `json:"status"`
-	Division   Division  `json:"division"`
-	DivisionID uint      `json:"-"`
-	Away       Team      `json:"away"`
-	Home       Team      `json:"home"`
-	AwayID     uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
-	HomeID     uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
-	AwayScore  uint      `json:"awayScore"`
-	HomeScore  uint      `json:"homeScore"`
-	Rink       Rink      `json:"rink" gorm:"not null"`
-	RinkID     uint      `json:"-"`
+	Start        time.Time `json:"start" gorm:"not null;unique_index:idx_start_away_home"`
+	Season       int       `json:"season"`
+	Status       string    `json:"status"`
+	DivisionName string    `json:"divisionName"`
+	Away         Team      `json:"away" `
+	Home         Team      `json:"home"`
+	AwayID       uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
+	HomeID       uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
+	AwayScore    uint      `json:"awayScore"`
+	HomeScore    uint      `json:"homeScore"`
+	Rink         Rink      `json:"rink" gorm:"not null"`
+	RinkID       uint      `json:"-"`
 	//Goals	   []MatchGoal `json:"goals,omitempty"`
 }
 
@@ -52,8 +51,7 @@ func CreateMatch(m Match, DB *gorm.DB) error {
 
 func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	m := Match{}
-	DB.Preload("Division").
-		Preload("Away").
+	DB.Preload("Away").
 		Preload("Home").
 		Where("ID = ? AND deleted_at IS NULL", id).First(&m)
 	return m, DB.Error
@@ -61,8 +59,7 @@ func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 
 func FetchMatches(DB *gorm.DB) ([]Match, error) {
 	m := make([]Match, 0)
-	DB.Preload("Division").
-		Preload("Away").
+	DB.Preload("Away").
 		Preload("Away.Division").
 		Preload("Home").
 		Preload("Home.Division").
