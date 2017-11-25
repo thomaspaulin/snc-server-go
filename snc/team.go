@@ -3,6 +3,7 @@ package snc
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 // todo use deleted at fields
@@ -10,10 +11,13 @@ import (
 // Team
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
-	gorm.Model
-	Name       string   `json:"name" gorm:"not null;unique_index"`
-	Division   Division `json:"division"`
-	DivisionID uint     `json:"-"`
+	ID         uint       `gorm:"primary_key"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+	DeletedAt  *time.Time `json:"-" sql:"index"`
+	Name       string     `json:"name" gorm:"not null;unique_index"`
+	Division   Division   `json:"division"`
+	DivisionID uint       `json:"-"`
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
@@ -55,8 +59,11 @@ func DeleteTeam(id uint, DB *gorm.DB) error {
 // Division
 //--------------------------------------------------------------------------------------------------------------------//
 type Division struct {
-	gorm.Model
-	Name string `json:"name" gorm:"not null;unique_index"`
+	ID        uint       `gorm:"primary_key"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
+	Name      string     `json:"name" gorm:"not null;unique_index"`
 }
 
 func CreateDivision(d Division, DB *gorm.DB) error {

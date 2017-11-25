@@ -24,7 +24,10 @@ const (
 // Match
 //-----------------------------------------------//
 type Match struct {
-	gorm.Model
+	ID        uint       `gorm:"primary_key"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
 	// Datetime of the match start in UTC
 	Start      time.Time `json:"start" gorm:"not null;unique_index:idx_start_away_home"`
 	Season     int       `json:"season"`
@@ -126,7 +129,10 @@ func DeleteGoal(id uint, DB *gorm.DB) error {
 }
 
 //type MatchGoal struct {
-//	gorm.Model
+//  ID        uint `gorm:"primary_key"`
+//  CreatedAt time.Time
+//  UpdatedAt time.Time
+//  DeletedAt *time.Time `json:"-" sql:"index"`
 //	MatchID uint	`gorm:"index, primary_key"`
 //	GoalID uint		`gorm:"index, primary_key"`
 //}
