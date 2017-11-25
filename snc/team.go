@@ -11,13 +11,12 @@ import (
 // Team
 //--------------------------------------------------------------------------------------------------------------------//
 type Team struct {
-	ID         uint       `gorm:"primary_key"`
-	CreatedAt  time.Time  `json:"createdAt"`
-	UpdatedAt  time.Time  `json:"updatedAt"`
-	DeletedAt  *time.Time `json:"-" sql:"index"`
-	Name       string     `json:"name" gorm:"not null;unique_index"`
-	Division   Division   `json:"division"`
-	DivisionID uint       `json:"-"`
+	ID           uint       `gorm:"primary_key"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	DeletedAt    *time.Time `json:"-" sql:"index"`
+	Name         string     `json:"name" gorm:"not null;unique_index"`
+	DivisionName string     `json:"divisionName"`
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
@@ -28,19 +27,19 @@ func CreateTeam(t Team, DB *gorm.DB) error {
 func FetchTeam(id uint, DB *gorm.DB) (Team, error) {
 	fmt.Println("Fetching team")
 	var team Team
-	DB.Preload("Division").Where("deleted_at IS NULL").First(&team, id)
+	DB.Where("deleted_at IS NULL").First(&team, id)
 	return team, DB.Error
 }
 
 func FetchTeams(DB *gorm.DB) ([]Team, error) {
 	teams := make([]Team, 0)
-	DB = DB.Preload("Division").Where("deleted_at IS NULL").Find(&teams)
+	DB = DB.Where("deleted_at IS NULL").Find(&teams)
 	return teams, DB.Error
 }
 
 func TeamCalled(name string, DB *gorm.DB) (Team, error) {
 	var team Team
-	DB.Preload("Division").Where("name = ? AND deleted_at IS NULL", name).First(&team)
+	DB.Where("name = ? AND deleted_at IS NULL", name).First(&team)
 	return team, DB.Error
 }
 
@@ -64,6 +63,7 @@ type Division struct {
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:"index"`
 	Name      string     `json:"name" gorm:"not null;unique_index"`
+	Teams     []Team     `json:"teams" gorm:"ForeignKey:DivisionName;AssociationForeignKey:Name"`
 }
 
 func CreateDivision(d Division, DB *gorm.DB) error {
@@ -73,13 +73,13 @@ func CreateDivision(d Division, DB *gorm.DB) error {
 
 func FetchDivision(id uint, DB *gorm.DB) (Division, error) {
 	var d Division
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&d)
+	DB.Preload("Teams").Where("ID = ? AND deleted_at IS NULL", id).First(&d)
 	return d, DB.Error
 }
 
 func FetchDivisions(DB *gorm.DB) ([]Division, error) {
 	d := make([]Division, 0)
-	DB.Where("deleted_at IS NULL").Find(&d)
+	DB.Preload("Teams").Where("deleted_at IS NULL").Find(&d)
 	return d, DB.Error
 }
 

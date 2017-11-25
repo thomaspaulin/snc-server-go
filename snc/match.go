@@ -34,10 +34,10 @@ type Match struct {
 	Status     string    `json:"status"`
 	Division   Division  `json:"division"`
 	DivisionID uint      `json:"-"`
-	Away       Team      `json:"away" gorm:"not null;unique_index:idx_start_away_home"`
-	Home       Team      `json:"home" gorm:"not null;unique_index:idx_start_away_home"`
-	AwayID     uint      `json:"-"`
-	HomeID     uint      `json:"-"`
+	Away       Team      `json:"away"`
+	Home       Team      `json:"home"`
+	AwayID     uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
+	HomeID     uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
 	AwayScore  uint      `json:"awayScore"`
 	HomeScore  uint      `json:"homeScore"`
 	Rink       Rink      `json:"rink" gorm:"not null"`
