@@ -71,6 +71,11 @@ type Division struct {
 }
 
 func CreateDivision(d Division, DB *gorm.DB) error {
+	division, _ := FetchDivisionNamed(d.Name, DB)
+	if division.ID != 0 {
+		d.ID = division.ID
+		return UpdateDivision(d, DB)
+	}
 	res := DB.Create(&d)
 	return res.Error
 }
@@ -79,6 +84,12 @@ func FetchDivision(id uint, DB *gorm.DB) (Division, error) {
 	var d Division
 	res := DB.Preload("Teams").Where("ID = ? AND deleted_at IS NULL", id).First(&d)
 	return d, res.Error
+}
+
+func FetchDivisionNamed(name string, DB *gorm.DB) (Division, error) {
+	var div Division
+	res := DB.Preload("Teams").Where("name = ? AND deleted_at IS NULL", name).First(&div)
+	return div, res.Error
 }
 
 func FetchDivisions(DB *gorm.DB) ([]Division, error) {
