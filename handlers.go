@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"fmt"
 )
 
 func Index(c *gin.Context) {
@@ -32,7 +33,13 @@ func CreateMatchHandler(c *gin.Context) {
 }
 
 func GetMatchesHandler(c *gin.Context) {
-	matches, err := snc.FetchMatches(DB)
+	var pagination snc.Pagination
+	if c.ShouldBindQuery(&pagination) != nil {
+		fmt.Println("Failed to bind query params")
+		pagination.Limit = -1
+		pagination.Offset = -1
+	}
+	matches, err := snc.FetchMatches(pagination, DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
