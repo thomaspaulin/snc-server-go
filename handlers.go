@@ -34,7 +34,7 @@ func CreateMatchHandler(c *gin.Context) {
 
 func GetMatchesHandler(c *gin.Context) {
 	var pagination snc.Pagination
-	if c.ShouldBindQuery(&pagination) != nil {
+	if c.Bind(&pagination) != nil {
 		fmt.Println("Failed to bind query params")
 		pagination.Limit = -1
 		pagination.Offset = -1
