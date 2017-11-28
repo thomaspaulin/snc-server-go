@@ -30,33 +30,92 @@ type Pagination struct {
 // Match
 //-----------------------------------------------//
 type Match struct {
-	gorm.Model
+	ID        uint       `gorm:"primary_key"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
 	// Datetime of the match start in UTC
-	Start      time.Time `json:"start"`
-	Season     int       `json:"season"`
-	Status     string    `json:"status"`
-	Division   Division  `json:"division" gorm:"ForeignKey:DivisionID"`
-	DivisionID uint      `json:"-"`
-	Away       Team      `json:"away" gorm:"ForeignKey:AwayID"`
-	Home       Team      `json:"home" gorm:"ForeignKey:HomeID"`
-	AwayID     uint      `json:"-"`
-	HomeID     uint      `json:"-"`
-	AwayScore  uint      `json:"awayScore"`
-	HomeScore  uint      `json:"homeScore"`
-	Rink       Rink      `json:"rink" gorm:"ForeignKey:RinkID"`
-	RinkID     uint      `json:"-"`
+	Start        time.Time `json:"start" gorm:"not null;unique_index:idx_start_away_home"`
+	Season       int       `json:"season"`
+	Status       string    `json:"status"`
+	DivisionName string    `json:"divisionName"`
+	Away         Team      `json:"away" `
+	Home         Team      `json:"home"`
+	AwayID       uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
+	HomeID       uint      `json:"-" gorm:"not null;unique_index:idx_start_away_home"`
+	AwayScore    uint      `json:"awayScore"`
+	HomeScore    uint      `json:"homeScore"`
+	Rink         Rink      `json:"rink" gorm:"not null"`
+	RinkID       uint      `json:"-"`
 	//Goals	   []MatchGoal `json:"goals,omitempty"`
 }
 
 func CreateMatch(m Match, DB *gorm.DB) error {
-	DB.Create(&m)
-	return DB.Error
+	var awayID, homeID, rinkID uint
+	away, _ := FetchTeamNamed(m.Away.Name, DB)
+	awayID = away.ID
+	home, _ := FetchTeamNamed(m.Home.Name, DB)
+	homeID = home.ID
+	rink, _ := FetchRinkNamed(m.Rink.Name, DB)
+	rinkID = rink.ID
+
+	// For some reason IDs aren't being fetched so put this hack in place
+	var res *gorm.DB
+	if awayID != 0 && homeID != 0 && rinkID != 0 {
+		var match Match
+		res = DB.Where("start = ? AND away_id = ? AND home_id = ?", m.Start, awayID, homeID).
+			Find(&match)
+		if match.ID != 0 {
+			m.ID = match.ID
+			if m.AwayID == 0 {
+				m.AwayID = awayID
+				m.Away.ID = awayID
+			}
+			if m.HomeID == 0 {
+				m.HomeID = homeID
+				m.Home.ID = homeID
+			}
+			if m.RinkID == 0 {
+				m.RinkID = rinkID
+				m.Rink.ID = rinkID
+			}
+			// found match in DB
+			res = DB.Save(&m)
+		} else {
+			// didn't find match but did find the teams
+			m.AwayID = awayID
+			m.Away.ID = awayID
+			m.HomeID = homeID
+			m.Home.ID = homeID
+			m.RinkID = rinkID
+			m.Rink.ID = rinkID
+			res = DB.Create(&m)
+		}
+	} else {
+		if m.AwayID == 0 {
+			m.AwayID = awayID
+			m.Away.ID = awayID
+		}
+		if m.HomeID == 0 {
+			m.HomeID = homeID
+			m.Home.ID = homeID
+		}
+		if m.RinkID == 0 {
+			m.RinkID = rinkID
+			m.Rink.ID = rinkID
+		}
+		res = DB.Create(&m)
+	}
+	return res.Error
 }
 
 func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	m := Match{}
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&m)
-	return m, DB.Error
+	res := DB.Preload("Away").
+		Preload("Home").
+		Preload("Rink").
+		Where("id = ? AND deleted_at IS NULL", id).First(&m)
+	return m, res.Error
 }
 
 func FetchMatches(pagination Pagination, DB *gorm.DB) ([]Match, error) {
@@ -71,23 +130,25 @@ func FetchMatches(pagination Pagination, DB *gorm.DB) ([]Match, error) {
 		pagination.Limit = -1
 	}
 	m := make([]Match, 0)
-	DB.Where("deleted_at IS NULL").
+	res := DB.Preload("Away").
+		Preload("Home").
+		Preload("Rink").Where("deleted_at IS NULL").
 		Order("start asc").
 		Offset(pagination.Offset).
 		Limit(pagination.Limit).
 		Find(&m)
-	return m, DB.Error
+	return m, res.Error
 }
 
 func UpdateMatch(m Match, DB *gorm.DB) error {
-	DB.Where("deleted_at IS NULL").Save(&m)
-	return DB.Error
+	res := DB.Where("deleted_at IS NULL").Save(&m)
+	return res.Error
 }
 
 func DeleteMatch(id uint, DB *gorm.DB) error {
 	var m Match
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&m)
-	return DB.Error
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&m)
+	return res.Error
 }
 
 //-----------------------------------------------//
@@ -96,46 +157,51 @@ func DeleteMatch(id uint, DB *gorm.DB) error {
 type Goal struct {
 	gorm.Model
 	GoalType string `json:"goalType"`
-	Team     Team   `json:"team" gorm:"ForeignKey:TeamID"`
+	Team     Team   `json:"team"`
 	TeamID   uint   `json:"-"`
 	Period   uint   `json:"period"`
 	// Seconds left in the period when the goal was scored
 	Time     uint   `json:"time"`
-	Scorer   Player `json:"scoredBy" gorm:"ForeignKey:ScorerID"`
+	Scorer   Player `json:"scoredBy"`
 	ScorerID uint   `json:"-"`
 	//AssistedBy []Player `json:"assistedBy" gorm:"ForeignKey:ID"`
 }
 
 func CreateGoal(g Goal, DB *gorm.DB) error {
-	DB.Create(&g)
-	return DB.Error
+	res := DB.Create(&g)
+	return res.Error
 }
 
 func FetchGoal(id uint, DB *gorm.DB) (Goal, error) {
 	g := Goal{}
-	DB.Where("ID = ? AND deleted_at IS NULL", id).First(&g)
-	return g, DB.Error
+	res := DB.Preload("Team").
+		Preload("Scorer").
+		Where("id = ? AND deleted_at IS NULL", id).First(&g)
+	return g, res.Error
 }
 
 func FetchGoals(DB *gorm.DB) ([]Goal, error) {
 	m := make([]Goal, 0)
-	DB.Where("deleted_at IS NULL").Find(&m)
-	return m, DB.Error
+	res := DB.Where("deleted_at IS NULL").Find(&m)
+	return m, res.Error
 }
 
 func UpdateGoal(g Goal, DB *gorm.DB) error {
-	DB.Where("deleted_at IS NULL").Save(&g)
-	return DB.Error
+	res := DB.Where("deleted_at IS NULL").Save(&g)
+	return res.Error
 }
 
 func DeleteGoal(id uint, DB *gorm.DB) error {
 	var g Goal
-	DB.Where("ID = ? AND deleted_at IS NULL", id).Delete(&g)
-	return DB.Error
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&g)
+	return res.Error
 }
 
 //type MatchGoal struct {
-//	gorm.Model
+//  ID        uint `gorm:"primary_key"`
+//  CreatedAt time.Time
+//  UpdatedAt time.Time
+//  DeletedAt *time.Time `json:"-" sql:"index"`
 //	MatchID uint	`gorm:"index, primary_key"`
 //	GoalID uint		`gorm:"index, primary_key"`
 //}

@@ -236,7 +236,7 @@ func GetSpecificTeamHandler(c *gin.Context) {
 	if teamID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing team ID"})
 	} else if _, err := strconv.Atoi(teamID); err != nil {
-		t, err = snc.TeamCalled(teamID, DB)
+		t, err = snc.FetchTeamNamed(teamID, DB)
 		if err != nil {
 			log.Println(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
