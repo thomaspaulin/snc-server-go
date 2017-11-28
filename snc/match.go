@@ -3,6 +3,7 @@ package snc
 import (
 	"github.com/jinzhu/gorm"
 	"time"
+	"fmt"
 )
 
 // todo handle the errors properly
@@ -19,6 +20,11 @@ const (
 	Underway = "Underway"
 	Over     = "Over"
 )
+
+type Pagination struct {
+	Offset int	`form:"offset"`
+	Limit  int	`form:"limit"`
+}
 
 //-----------------------------------------------//
 // Match
@@ -53,9 +59,23 @@ func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	return m, DB.Error
 }
 
-func FetchMatches(DB *gorm.DB) ([]Match, error) {
+func FetchMatches(pagination Pagination, DB *gorm.DB) ([]Match, error) {
+	if pagination.Offset == 0 || pagination.Offset < -1 {
+		fmt.Println("Pagination offset not set or invalid. Cancelling.")
+		// if offset not set or invalid cancel the offset (-1 in gorm)
+		pagination.Offset = -1
+	}
+	if pagination.Limit == 0 || pagination.Limit < -1 {
+		fmt.Println("Pagination limit not set or invalid. Cancelling.")
+		// if limit not set or invalid cancel the limit (-1 in gorm)
+		pagination.Limit = -1
+	}
 	m := make([]Match, 0)
-	DB.Where("deleted_at IS NULL").Find(&m)
+	DB.Where("deleted_at IS NULL").
+		Order("start asc").
+		Offset(pagination.Offset).
+		Limit(pagination.Limit).
+		Find(&m)
 	return m, DB.Error
 }
 
