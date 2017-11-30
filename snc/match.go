@@ -1,9 +1,9 @@
 package snc
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
-	"fmt"
 )
 
 // todo handle the errors properly
@@ -22,8 +22,13 @@ const (
 )
 
 type Pagination struct {
-	Offset int	`form:"offset"`
-	Limit  int	`form:"limit"`
+	Offset int `form:"offset"`
+	Limit  int `form:"limit"`
+}
+
+type DateRange struct {
+	Start time.Time `form:"from" time_format:"2006-01-02"`
+	End   time.Time `form:"to" time_format:"2006-01-02"`
 }
 
 //-----------------------------------------------//
@@ -118,7 +123,7 @@ func FetchMatch(id uint, DB *gorm.DB) (Match, error) {
 	return m, res.Error
 }
 
-func FetchMatches(pagination Pagination, DB *gorm.DB) ([]Match, error) {
+func FetchMatches(dates DateRange, pagination Pagination, DB *gorm.DB) ([]Match, error) {
 	if pagination.Offset == 0 || pagination.Offset < -1 {
 		fmt.Println("Pagination offset not set or invalid. Cancelling.")
 		// if offset not set or invalid cancel the offset (-1 in gorm)
@@ -129,10 +134,23 @@ func FetchMatches(pagination Pagination, DB *gorm.DB) ([]Match, error) {
 		// if limit not set or invalid cancel the limit (-1 in gorm)
 		pagination.Limit = -1
 	}
+
+	query := "deleted_at IS NULL"
+	dateRange := make([]interface{}, 0)
+	if !dates.Start.IsZero() {
+		query += " AND start >= ?"
+		dateRange = append(dateRange, dates.Start)
+	}
+	if !dates.End.IsZero() {
+		query += " AND start < ?"
+		dateRange = append(dateRange, dates.End)
+	}
+
 	m := make([]Match, 0)
 	res := DB.Preload("Away").
 		Preload("Home").
-		Preload("Rink").Where("deleted_at IS NULL").
+		Preload("Rink").
+		Where(query, dateRange...).
 		Order("start asc").
 		Offset(pagination.Offset).
 		Limit(pagination.Limit).
