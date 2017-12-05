@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/thomaspaulin/snc-server-go/snc"
 	"log"
 	"net/http"
 	"strconv"
-	"fmt"
 )
 
 func Index(c *gin.Context) {
@@ -35,11 +35,20 @@ func CreateMatchHandler(c *gin.Context) {
 func GetMatchesHandler(c *gin.Context) {
 	var pagination snc.Pagination
 	if c.Bind(&pagination) != nil {
-		fmt.Println("Failed to bind query params")
+		fmt.Println("Failed to bind pagination params. Not paging.")
 		pagination.Limit = -1
 		pagination.Offset = -1
 	}
-	matches, err := snc.FetchMatches(pagination, DB)
+	var dates snc.DateRange
+	if c.Bind(&dates) != nil {
+		fmt.Println("Failed to bind date range params. Allowing all.")
+	}
+
+	if !dates.Start.IsZero() && !dates.End.IsZero() && dates.End.Unix() < dates.Start.Unix() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "'from' date must come before 'to' date"})
+	}
+
+	matches, err := snc.FetchMatches(dates, pagination, DB)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
