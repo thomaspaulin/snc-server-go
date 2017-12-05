@@ -16,6 +16,7 @@ type Team struct {
 	DeletedAt    *time.Time `json:"-" sql:"index"`
 	Name         string     `json:"name" gorm:"not null;unique_index;primary_key"`
 	DivisionName string     `json:"divisionName"`
+	LogoURL		 string		`json:"logoURL"`
 }
 
 func CreateTeam(t Team, DB *gorm.DB) error {
