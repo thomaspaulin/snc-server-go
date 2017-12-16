@@ -486,6 +486,95 @@ func DeleteDivisionHandler(c *gin.Context) {
 }
 
 //------------------------------------------------------------------------------------------------//
+// Leagues
+//------------------------------------------------------------------------------------------------//
+func CreateLeagueHandler(c *gin.Context) {
+	l := snc.League{}
+	if err := c.BindJSON(&l); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err = snc.CreateLeague(l, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func GetLeaguesHandler(c *gin.Context) {
+	leagues, err := snc.FetchLeagues(DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	if len(leagues) == 0 {
+		c.AbortWithStatus(http.StatusNoContent)
+	}
+	c.JSON(http.StatusOK, leagues)
+}
+
+func GetSpecificLeagueHandler(c *gin.Context) {
+	leagueID := c.Param("leagueID")
+	if leagueID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(leagueID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	lID, err := strconv.Atoi(leagueID)
+	l, err := snc.FetchLeague(uint(lID), DB)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	if l.ID != 0 {
+		c.JSON(http.StatusOK, l)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
+func UpdateLeagueHandler(c *gin.Context) {
+	leagueID := c.Param("leagueID")
+	if leagueID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing division ID"})
+	} else if _, err := strconv.Atoi(leagueID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	lID, err := strconv.Atoi(leagueID)
+	l := snc.League{}
+	if err = c.BindJSON(&l); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if l.ID != 0 && l.ID != uint(lID) {
+			msg := `There was a mismatch between ID specified in the path (URL) and the ID in the JSON provided. They must be both, or you must omit the ID in the JSON and that in the path will be used`
+			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		} else if l.ID == 0 {
+			// ID wasn't provided so assume the one in the URL
+			l.ID = uint(lID)
+		}
+		if err := snc.UpdateLeague(l, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func DeleteLeagueHandler(c *gin.Context) {
+	leagueID := c.Param("leagueID")
+	if leagueID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing league ID"})
+	} else if _, err := strconv.Atoi(leagueID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be an integer greater than 0"})
+	}
+	lID, err := strconv.Atoi(leagueID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		if err := snc.DeleteLeague(lID, DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------//
 // Players
 //------------------------------------------------------------------------------------------------//
 func CreatePlayerHandler(c *gin.Context) {
