@@ -77,7 +77,7 @@ func main() {
 
 	defer DB.Close()
 
-	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Match{}) //&snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
+	DB.AutoMigrate(&snc.Rink{}, &snc.Division{}, &snc.Team{}, &snc.Match{}, &snc.League{}) //&snc.Player{}, &snc.Match{}, &snc.Goal{}) //, &snc.Penalty{})
 	// todo find a way to do it such that the services aren't in the context
 	// todo rename updateX to be more in line with replaceX
 	// todo use PATCH to update parts of an entity and
@@ -120,6 +120,12 @@ func main() {
 		v1.POST("/divisions", CreateDivisionHandler)
 		v1.PUT("/divisions/:divisionID", UpdateDivisionHandler)
 		v1.DELETE("/divisions/:divisionID", DeleteDivisionHandler)
+
+		v1.GET("/leagues", GetLeaguesHandler)
+		v1.GET("/leagues/:leagueID", GetSpecificLeagueHandler)
+		v1.POST("/leagues", CreateLeagueHandler)
+		v1.PUT("/leagues/:leagueID", UpdateLeagueHandler)
+		v1.DELETE("/leagues/:leagueID", DeleteLeagueHandler)
 
 		v1.GET("/players", GetPlayersHandler)
 		v1.GET("/players/:playerID", GetSpecificPlayerHandler)

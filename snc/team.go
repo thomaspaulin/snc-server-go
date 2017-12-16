@@ -15,6 +15,7 @@ type Team struct {
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	DeletedAt    *time.Time `json:"-" sql:"index"`
 	Name         string     `json:"name" gorm:"not null;unique_index;primary_key"`
+	LeagueName   string     `json:"leagueName"`
 	DivisionName string     `json:"divisionName"`
 	LogoURL		 string		`json:"logoURL"`
 }
@@ -68,6 +69,7 @@ type Division struct {
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:"index"`
 	Name      string     `json:"name" gorm:"not null;unique_index;primary_key"`
+	LeagueName string    `json:"league gorm:"not null"`	  
 	Teams     []Team     `json:"teams" gorm:"ForeignKey:DivisionName;AssociationForeignKey:Name"`
 }
 
@@ -107,6 +109,57 @@ func UpdateDivision(d Division, DB *gorm.DB) error {
 func DeleteDivision(id int, DB *gorm.DB) error {
 	var div Division
 	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&div)
+	return res.Error
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+// League
+//--------------------------------------------------------------------------------------------------------------------//
+type League struct {
+	ID        uint       `gorm:"primary_key"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
+	Name      string     `json:"name" gorm:"not null;unique_index;primary_key"`
+	Divisions     []Division     `json:"divisions" gorm:"ForeignKey:LeagueName;AssociationForeignKey:Name"`
+}
+
+func CreateLeague(l League, DB *gorm.DB) error {
+	league, _ := FetchLeagueNamed(l.Name, DB)
+	if league.ID != 0 {
+		l.ID = league.ID
+		return UpdateLeague(l, DB)
+	}
+	res := DB.Create(&l)
+	return res.Error
+}
+
+func FetchLeague(id uint, DB *gorm.DB) (League, error) {
+	var l League
+	res := DB.Preload("Leagues").Where("ID = ? AND deleted_at IS NULL", id).First(&l)
+	return l, res.Error
+}
+
+func FetchLeagueNamed(name string, DB *gorm.DB) (League, error) {
+	var l League
+	res := DB.Preload("Leagues").Where("name = ? AND deleted_at IS NULL", name).First(&l)
+	return l, res.Error
+}
+
+func FetchLeagues(DB *gorm.DB) ([]League, error) {
+	l := make([]League, 0)
+	res := DB.Preload("League").Where("deleted_at IS NULL").Find(&l)
+	return l, res.Error
+}
+
+func UpdateLeague(l League, DB *gorm.DB) error {
+	res := DB.Where("id = ? AND deleted_at IS NULL", l.ID).Save(&l)
+	return res.Error
+}
+
+func DeleteLeague(id int, DB *gorm.DB) error {
+	var l League
+	res := DB.Where("id = ? AND deleted_at IS NULL", id).Delete(&l)
 	return res.Error
 }
 
